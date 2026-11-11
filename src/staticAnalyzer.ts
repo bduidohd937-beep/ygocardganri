@@ -7,10 +7,11 @@ export type AuditFinding = {
   key: string; ruleId: string; severity: Severity; certainty: EvidenceKind;
   themeId: string; passcode: string; title: string; evidence: string;
   source: string; line: number | null; suggestion: string;
+  patch?: import('./luaAstAnalyzer').LuaPatch;
 };
 export type LuaAuditSource = { assetId: string; filename: string; hash: string; content: string; truncated: boolean; unavailable?: boolean };
 export type AuditInput = { card: LinkedCard; approvedEffect: string; lua: LuaAuditSource[] };
-export type AuditReport = { createdAt: string; engine: 'P4-static-v1'; scope: '카드' | '테마'; themeId: string;
+export type AuditReport = { createdAt: string; engine: 'P4-static-v1' | 'P4.1-ast-v1'; scope: '카드' | '테마'; themeId: string;
   totalCards: number; scannedCards: number; truncated: boolean; findings: AuditFinding[] };
 
 /** Not cryptographic; only for stable presentation of revision-dependent finding keys. */

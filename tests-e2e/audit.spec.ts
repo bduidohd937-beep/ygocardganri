@@ -8,6 +8,8 @@ async function fixture(){
 }
 
 test('P4: imported CDB/Lua evidence → static analyzer → persistent manual triage and JSON report',async({page})=>{
+  const pageErrors:string[]=[];
+  page.on('pageerror',error=>pageErrors.push(error.message));
   page.on('dialog',dialog=>void dialog.accept('근거: Lua ID 일치성 확인 필요'));
   await page.goto('/');
   await expect(page.locator('.realm-tile')).toHaveCount(5);
@@ -27,7 +29,16 @@ test('P4: imported CDB/Lua evidence → static analyzer → persistent manual tr
   await page.locator('.fc-open-index').filter({hasText:'P4 테스트 카드'}).click();
   await page.getByRole('button',{name:'정적 오류 분석'}).click();
   await page.getByRole('button',{name:'이 카드 분석 실행'}).click();
-  await expect(page.locator('.audit-rule').filter({hasText:'LUA_ID_MISMATCH'})).toHaveCount(1);
+  try { await expect(page.locator('.audit-rule').filter({hasText:'LUA_ID_MISMATCH'})).toHaveCount(1); }
+  catch(e) {
+    const errors=await page.locator('.audit-error').allTextContents();
+    const progress=await page.locator('.audit-progress').allTextContents();
+    const report=await page.locator('.audit-coverage').allTextContents();
+    const root=await page.locator('.audit-root').allTextContents();
+    const studio=await page.locator('.iw-root').allTextContents();
+    const body=(await page.locator('body').innerText()).slice(0,1200);
+    throw new Error('P4 audit did not render: '+JSON.stringify({errors,progress,report,root:root.map(s=>s.slice(0,900)),studio:studio.map(s=>s.slice(0,400)),url:page.url(),pageErrors,body})+' / '+String(e));
+  }
   await expect(page.locator('.audit-rule').filter({hasText:'COUNT_LIMIT_REVIEW'})).toHaveCount(1);
   await page.getByLabel('LUA_ID_MISMATCH 검토 상태').selectOption('조치 필요');
   await expect(page.locator('.audit-decision')).toContainText('조치 필요');
