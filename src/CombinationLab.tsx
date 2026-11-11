@@ -76,7 +76,7 @@ function RouteEditor({route,onSave,onDelete,cardNames}:{route:CombinationRoute;o
       </label>
     </div>
     {error&&<p className="combo-error" role="alert">{error}</p>}
-    <p className="combo-guide">A+B는 서로 다른 실물 2장, 추가 자원은 A/B와 겹치지 않는 ID의 실물 카드로 별도 충족해야 해.
+    <p className="combo-guide">A+B는 서로 다른 실제 카드 2장, 추가 자원은 A/B와 겹치지 않는 ID의 실물 카드로 별도 충족해야 해.
     금지 그룹의 카드가 1장이라도 패에 있으면 해당 루트는 실패야. <strong>수정 후 ‘조건 적용’</strong>을 눌러야 확률에 반영돼.</p>
   </div>;
 }
