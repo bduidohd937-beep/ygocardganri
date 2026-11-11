@@ -11,6 +11,7 @@ import { getAuditDecisions, latestDecisions, recordAuditDecision } from './audit
 import type { AuditDecision, AuditTriageStatus } from './auditDecisions';
 import LuaPatchReview from './LuaPatchReview';
 import EffectAlignmentPanel from './EffectAlignmentPanel';
+import EffectLinkPanel from './EffectLinkPanel';
 
 type Props={themeId?:string;passcode?:string;onOpenCard?:(themeId:string,passcode:string)=>void};
 const severities:Record<Severity,string>={오류:'높음 · 구조 확인',주의:'중간 · 자료 불일치',검토:'검토 · 정적 의심'};
@@ -92,9 +93,9 @@ export default function AuditCenter({themeId,passcode,onOpenCard}:Props){
     catch(e){setError(e instanceof Error?e.message:'검토 이력 저장 실패');}
   };
   return <section className={`audit-root ${passcode?'audit-root--inline':''}`}>
-    <header className="audit-heading"><div><span className="micro-label">P4.2 / EFFECT TEXT ↔ LUA AST</span>
+    <header className="audit-heading"><div><span className="micro-label">P4.3 / NUMBERED EFFECT ↔ LUA CALLBACK</span>
       <h2>{passcode?`카드 ${passcode} · 정적 오류 분석`:'정적 오류 분석기'}</h2>
-      <p>CDB 효과 원문의 조건·코스트·대상·효과 처리와 Lua AST의 구조를 비교하고, 누락 의심은 근거와 함께 보여줘. <strong>Lua 실행이나 규칙 적합성 인증은 하지 않아.</strong></p>
+      <p>CDB 번호 효과 ①·②·③을 Lua 등록 객체·콜백 처리와 대조해. e1이 ①이라고 가정하지 않고 고유 근거가 없으면 판별 불가로 표시해. <strong>Lua 실행이나 규칙 적합성 인증은 하지 않아.</strong></p>
     </div><div className="audit-header-icon"><ShieldAlert size={25}/></div></header>
     <div className="audit-toolbar">{!themeId&&<label>검사할 테마<select aria-label="정적 분석 대상 테마" disabled={running} value={selectedTheme} onChange={e=>setSelectedTheme(e.target.value)}>{catalog.themes.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></label>}
       <div className="audit-run-actions"><button type="button" className="primary-button" disabled={running||loading} onClick={()=>void start()}><Play size={14}/> {running?'분석 중...':passcode?'이 카드 분석 실행':'선택한 테마 정적 분석'}</button>
@@ -110,6 +111,7 @@ export default function AuditCenter({themeId,passcode,onOpenCard}:Props){
     {report&&<>
       <div className="audit-coverage" role="status"><strong>검사 카드 {report.scannedCards} / {report.totalCards}종</strong><span>규칙 엔진 {report.engine} · {new Date(report.createdAt).toLocaleString('ko-KR')}</span></div>
       {report.truncated&&<p className="audit-error"><AlertTriangle size={15}/>성능 보호를 위해 첫 {MAX_AUDIT_CARDS}종만 검사했어. 나머지 카드는 미검사 상태이며 검증완료가 아니야.</p>}
+      <EffectLinkPanel key={report.createdAt+'-links'} links={report.effectLinks||[]} onOpenCard={onOpenCard}/>
       <EffectAlignmentPanel key={report.createdAt} comparisons={report.comparisons||[]} onOpenCard={onOpenCard}/>
       <div className="audit-metrics">{(['오류','주의','검토'] as Severity[]).map(severity=><button className={filter===severity?'is-active':''} key={severity} onClick={()=>{setFilter(severity);setLimit(MAX_VISIBLE);}}><span>{severities[severity]}</span><strong>{count[severity]}</strong></button>)}<button className={filter==='전체'?'is-active':''} onClick={()=>setFilter('전체')}><span>전체 탐지</span><strong>{report.findings.length}</strong></button></div>
       <div className="audit-search"><Search size={15}/><input aria-label="분석 항목 검색" placeholder="규칙 코드·카드 ID·근거 검색" value={search} onChange={e=>{setSearch(e.target.value);setLimit(MAX_VISIBLE);}}/></div>

@@ -1,5 +1,5 @@
 /** P4.1: parse Lua source into an AST. NEVER execute a card script or write to the input. */
-import * as luaparse from 'luaparse';
+import { getParsedLua } from './luaAstCache';
 import type { AuditFinding, AuditInput, AuditReport, LuaAuditSource } from './staticAnalyzer';
 
 export type LuaPatch = {
@@ -66,20 +66,15 @@ function candidate(source: LuaAuditSource, start: number, end: number, after: st
 /** Parse structure, tracking function declarations and effect methods. Unknown engine helpers remain review candidates. */
 export function inspectLuaAst(input: AuditInput, src: LuaAuditSource): AuditFinding[] {
   if (src.unavailable || src.truncated || !src.content.trim()) return [];
-  let ast: unknown;
-  try {
-    ast = luaparse.parse(src.content, {
-      comments: false, locations: true, ranges: true, scope: false, luaVersion: '5.3',
-      encodingMode: 'none',
-    });
-  } catch (error) {
-    const e = error as { message?: string; line?: number };
+  const parsed = getParsedLua(src);
+  if (!parsed.ok) {
+    const e = parsed.error;
     return [newFinding(input, src, 'AST_PARSE_REVIEW', 'Lua 5.3 구문 분석 불가',
-      (e.message || '파서가 원문을 읽지 못했습니다.').slice(0, 160),
+      e.message.slice(0, 160),
       '이 결과만으로 EDOPro 문법 오류를 확정하지 마세요. 확장 문법이나 파서 호환성, Lua 원문을 비교하세요.',
-      typeof e.line === 'number' ? e.line : null)];
+      e.line ?? null)];
   }
-  const nodes = walk(ast);
+  const nodes = walk(parsed.ast);
   const functions = new Set<string>();
   const initFunctions: Node[] = [];
   for (const node of nodes) {
