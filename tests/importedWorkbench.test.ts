@@ -49,10 +49,10 @@ describe('P3 카드 연결과 원문 보존',()=>{
   it('반려, 메모, 수동 검수는 승인 효과를 변경하지 않는다',()=>{
     const start=emptyImportedRecord('other','12345');
     const edited=editImportedRecord(start,{workingName:'작업 제목',design:'청색 실루엣'});
-    const verified=setReview(edited,'lua','검토중','검수 준비');
+    const verified=setReview(edited,'lua','진행중','검수 준비');
     const pending=addImportedProposal(verified,'거부할 제안');
     const rejected=decideImportedProposal(pending,pending.proposals[0].id,'반려');
-    expect(rejected.approvedEffect).toBe('');expect(rejected.review.lua).toBe('검토중');
+    expect(rejected.approvedEffect).toBe('');expect(rejected.review.lua).toBe('진행중');
     expect(edited.workingName).toBe('작업 제목');expect(start.workingName).toBe('');
     expect(validateImportedRecord(rejected)).toBe(true);
   });
