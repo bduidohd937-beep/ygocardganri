@@ -1,11 +1,15 @@
-/** P5.1: exact combinational opening hands; no card-effect inference or simulation. */
-export type CombinationRoute={id:string;label:string;a:string[];b:string[]};
+/** P5.1/P5.2: exact opening-hand events; never predicts gameplay success. */
+import { advancedCombinationMetrics } from './conditionalCombinationMath';
+export type CombinationRoute={id:string;label:string;a:string[];b:string[];
+  /** Optional P5.2 per-route restrictions; absent in old P5.1 backups. */
+  forbiddenIds?:string[];resourceIds?:string[];minResources?:number;
+};
 export type CombinationPlan={routes:CombinationRoute[];brickIds:string[]};
 export type CombinationMetrics={
   canCalculate:boolean;total:number;hand:5|6;
   anyRoute:number|null;noRoute:number|null;perRoute:{id:string;label:string;probability:number|null}[];
   withRisk:number|null;withoutRisk:number|null;failedWithRisk:number|null;
-  riskChance:number|null;
+  riskChance:number|null;limitReason?:string;
 };
 export const MAX_COMBO_ROUTES=4;
 const validId=(id:string)=>/^[1-9]\d{0,11}$/.test(id)&&Number.isSafeInteger(Number(id));
@@ -25,6 +29,14 @@ export function validateCombinationPlan(value:unknown):value is CombinationPlan{
     unique.add(r.id);
     if(![...r.a,...r.b].every(id=>typeof id==='string'&&validId(id))||
        new Set(r.a).size!==r.a.length||new Set(r.b).size!==r.b.length)return false;
+    const forbidden=r.forbiddenIds??[],resources=r.resourceIds??[],min=r.minResources??0;
+    if(!Array.isArray(forbidden)||!Array.isArray(resources)||
+       forbidden.length>12||resources.length>12||
+       ![...forbidden,...resources].every(id=>typeof id==='string'&&validId(id))||
+       new Set(forbidden).size!==forbidden.length||new Set(resources).size!==resources.length||
+       !Number.isInteger(min)||min<0||min>3||
+       (min>0&&resources.length===0)||
+       (min>0&&resources.some(id=>r.a.includes(id)||r.b.includes(id))))return false;
   }
   return true;
 }
@@ -46,6 +58,8 @@ function combinations(n:number,k:number):number{
 /** Each physical copy is a distinct deck slot. A+B needs two separate slots even if groups overlap. */
 export function combinationMetrics(main:readonly string[],plan:CombinationPlan,hand:5|6):CombinationMetrics{
   if(!validateCombinationPlan(plan))throw new Error('조합 초동 설정이 유효하지 않습니다.');
+  if(plan.routes.some(r=>(r.forbiddenIds?.length||0)>0||(r.minResources||0)>0))
+    return advancedCombinationMetrics(main,plan,hand);
   const total=main.length;
   const base={canCalculate:false,total,hand,anyRoute:null,noRoute:null,
     perRoute:plan.routes.map(r=>({id:r.id,label:r.label,probability:null})),
