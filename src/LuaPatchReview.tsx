@@ -31,7 +31,10 @@ export default function LuaPatchReview({ finding, onRecorded }:
     if(original.slice(patch.start,patch.end)!==patch.before)
       throw new Error('수정 위치의 원문이 달라졌습니다. 수정안을 취소하고 다시 분석하세요.');
     const revised = original.slice(0,patch.start) + patch.after + original.slice(patch.end);
-    const proposedHash = toHex(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(revised)));
+    const encoded = new TextEncoder().encode(revised);
+    const buffer = new ArrayBuffer(encoded.byteLength);
+    new Uint8Array(buffer).set(encoded);
+    const proposedHash = toHex(await crypto.subtle.digest('SHA-256',buffer));
     return {original,revised,proposedHash};
   };
 
