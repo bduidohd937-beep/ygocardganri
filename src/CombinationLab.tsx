@@ -126,7 +126,7 @@ export default function CombinationLab({study,sourceMain,hand,cardNames,onChange
       <div className="combo-per-route"><strong>개별 루트 확률 (중복될 수 있어 서로 더하면 안 됨)</strong>
         {metrics.perRoute.map((r,i)=><div key={r.id}><span>{r.label}</span><strong>{pct(r.probability)}</strong><small>원본 대비 {delta(r.probability,original.perRoute[i]?.probability??null)}</small></div>)}</div>
     </div>}
-    {!metrics.canCalculate&&<p className="combo-pending">분석할 초동 루트를 추가하면 계산 결과가 나타나. 첫 패 장수보다 메인 덱이 적으면 확률을 계산하지 않아.</p>}
+    {!metrics.canCalculate&&<p className="combo-pending">{study.main.length>60?'현재 메인 덱이 60장을 초과해. 카드 목록은 보존되지만 조합 확률은 60장 이하에서만 계산할 수 있어.':plan.routes.length===0?'분석할 초동 루트를 추가하면 계산 결과가 나타나.':'첫 패 장수보다 메인 덱이 적어서 확률을 계산할 수 없어.'}</p>}
     <p className="combo-foot"><AlertTriangle size={15}/> A+B는 서로 다른 실제 카드 두 장이 필요해. 모든 값은 메인 덱에서 첫 패를 무작위로 뽑을 확률이야. 서치·효과 발동 조건·소환 제약·상대 견제에 따른 실제 전개 성공은 검증하지 않아.</p>
   </section>;
 }
