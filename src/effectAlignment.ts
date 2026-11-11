@@ -1,5 +1,5 @@
 /** P4.2 CDB/approved text ↔ Lua AST. Read-only observations, never an OCG verdict. */
-import * as luaparse from 'luaparse';
+import { getParsedLua } from './luaAstCache';
 import type { AuditFinding, AuditInput, AuditReport, LuaAuditSource } from './staticAnalyzer';
 
 export type AlignmentStage = '발동 조건' | '코스트' | '대상' | '효과 처리';
@@ -70,9 +70,11 @@ export function compareCardEffect(input:AuditInput,src:LuaAuditSource):EffectAli
   if(src.unavailable)return unavailable(input,src,text.label,'Lua 원본을 읽을 수 없어 비교하지 않았습니다.',text.value);
   if(src.truncated)return unavailable(input,src,text.label,'원본 일부만 읽어 누락 판정을 하지 않았습니다.',text.value);
   if(!src.content.trim())return unavailable(input,src,text.label,'Lua 원문이 비어 있습니다.',text.value);
+  const parsed=getParsedLua(src);
+  if(!parsed.ok)return unavailable(input,src,text.label,'Lua AST 파싱 불가: 구문 또는 파서 호환성을 검토하세요.',text.value);
   let nodes:AstNode[];
-  try{nodes=walk(luaparse.parse(src.content,{comments:false,locations:true,ranges:true,scope:false,luaVersion:'5.3',encodingMode:'none'}));}
-  catch{return unavailable(input,src,text.label,'Lua AST 파싱 불가: 구문 또는 파서 호환성을 검토하세요.',text.value);}
+  try{nodes=walk(parsed.ast);}
+  catch{return unavailable(input,src,text.label,'Lua AST 검사 범위를 초과했습니다.',text.value);}
   const calls=nodes.map(callNode).filter((c):c is Call=>c!==null);
   const registered=new Set<string>();
   for(const call of calls){
