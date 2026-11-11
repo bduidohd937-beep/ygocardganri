@@ -30,7 +30,7 @@ export async function runStaticAudit(themeId:string,passcode:string|null,signal:
         lua.push({assetId:asset.id,filename:asset.filename,hash:asset.sha256,content:await blob.slice(0,MAX_LUA_TEXT).text(),truncated:blob.size>MAX_LUA_TEXT});
       }catch{
         // Missing binary is a separate evidence problem; preserve identity and report as truncated/incomplete.
-        lua.push({assetId:asset.id,filename:asset.filename,hash:asset.sha256,content:'',truncated:true});
+        lua.push({assetId:asset.id,filename:asset.filename,hash:asset.sha256,content:'',truncated:false,unavailable:true});
       }
     }
     inputs.push({card,approvedEffect:recordByKey.get(cardRecordKey(themeId,card.passcode))?.approvedEffect||'',lua});
