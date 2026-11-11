@@ -1,8 +1,8 @@
 import { useEffect,useMemo,useRef,useState } from 'react';
-import type { FileCatalog,IndexedDeck } from './fileCatalog';
+import type { FileCatalog } from './fileCatalog';
 import { loadCatalog } from './fileVault';
 import { DECK_ROLES,cardCounts,deckWarnings,exportYdk,newDeckStudy,openingMetrics,setMainCopies,toggleDeckRole } from './deckMath';
-import type { DeckRole,DeckStudy } from './deckMath';
+import type { DeckStudy } from './deckMath';
 import { deleteDeckStudy,getDeckStudies,makeDeckBackup,restoreDeckStudies,saveDeckStudy } from './deckVault';
 import { Activity, AlertTriangle, Check, Download, FileInput, Plus, Save, SlidersHorizontal, Trash2, Upload } from 'lucide-react';
 import './deck-lab.css';
@@ -111,7 +111,7 @@ export default function DeckLab(){
   };
   const modify=(fn:(s:DeckStudy)=>DeckStudy)=>{
     if(!study||busy)return;
-    try{setStudy(s=>s?fn(s):s);setChanged(true);setNote(null);}
+    try{setStudy(fn(study));setChanged(true);setNote(null);}
     catch(e){inform(e instanceof Error?e.message:'수정 실패','error');}
   };
   const setCount=(id:string,count:number)=>modify(s=>setMainCopies(s,id,count));
