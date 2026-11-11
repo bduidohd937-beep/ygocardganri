@@ -8,7 +8,7 @@ describe('P0.5 coalesced saves',()=>{
     vi.useFakeTimers();
     const values:number[]=[];
     const states:string[]=[];
-    const saver=createCoalescedSaver(async n=>{values.push(n);},450,phase=>states.push(phase));
+    const saver=createCoalescedSaver<number>(async n=>{values.push(n);},450,phase=>states.push(phase));
     for(let i=0;i<100;i++)saver.schedule(i);
     await vi.advanceTimersByTimeAsync(451);
     expect(values).toEqual([99]);
@@ -19,7 +19,7 @@ describe('P0.5 coalesced saves',()=>{
     const order:number[]=[];
     let unblock:()=>void=()=>{};
     const first=new Promise<void>(resolve=>{unblock=resolve;});
-    const saver=createCoalescedSaver(async n=>{
+    const saver=createCoalescedSaver<number>(async n=>{
       if(n===1)await first;
       order.push(n);
     },100);
@@ -36,7 +36,7 @@ describe('P0.5 coalesced saves',()=>{
     vi.useFakeTimers();
     const states:string[]=[];
     const stored:number[]=[];
-    const saver=createCoalescedSaver(async n=>{
+    const saver=createCoalescedSaver<number>(async n=>{
       if(n===1)throw new Error('quota');
       stored.push(n);
     },100,phase=>states.push(phase));
