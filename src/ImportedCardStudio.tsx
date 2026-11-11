@@ -8,10 +8,11 @@ import type { CardReview, ImportedRecord, ReviewField } from './importedWorkbenc
 import { addImportedProposal, decideImportedProposal, editImportedRecord, setReview } from './importedWorkbench';
 import { getOriginal, loadCatalog } from './fileVault';
 import { loadImportedRecord, saveImportedRecord } from './workbenchVault';
+import AuditCenter from './AuditCenter';
 import './imported-studio.css';
 
 type Props={themeId:string;passcode:string;onBack:()=>void};
-type Tab='effect'|'files'|'history';
+type Tab='effect'|'files'|'history'|'audit';
 const reviewGroups: {field:ReviewField; label:string; choices:readonly string[]}[] = [
   {field:'designStatus',label:'설계 종합 승인',choices:APPROVAL_OPTIONS},
   {field:'artStatus',label:'일러스트 승인',choices:APPROVAL_OPTIONS},
@@ -142,7 +143,7 @@ export default function ImportedCardStudio({themeId,passcode,onBack}:Props){
         {!editMode&&record.design&&<div className="iw-notes"><small>디자인 방향</small><p>{record.design}</p></div>}
       </aside>
       <div className="iw-editor">
-        <div className="tabline"><button className={tab==='effect'?'active':''} onClick={()=>setTab('effect')}>효과 · 설계</button><button className={tab==='files'?'active':''} onClick={()=>setTab('files')}>파일 · Lua</button><button className={tab==='history'?'active':''} onClick={()=>setTab('history')}>변경 이력</button></div>
+        <div className="tabline"><button className={tab==='effect'?'active':''} onClick={()=>setTab('effect')}>효과 · 설계</button><button className={tab==='files'?'active':''} onClick={()=>setTab('files')}>파일 · Lua</button><button className={tab==='audit'?'active':''} onClick={()=>setTab('audit')}>정적 오류 분석</button><button className={tab==='history'?'active':''} onClick={()=>setTab('history')}>변경 이력</button></div>
         {tab==='effect'&&<>
           <section className="editor-module"><div className="module-heading"><div><span className="micro-label">APPROVED TEXT / HUMAN DECISION</span><h3>승인 효과 원문</h3></div><span className="module-version">v{record.revision}</span></div><pre className="iw-text iw-text--approved">{record.approvedEffect||'미확인 · 승인된 효과 원문이 없습니다.'}</pre><div className="module-foot"><ShieldCheck size={15}/><span>{record.approvedEffectSource||'원문 승인 근거: 미확인'}</span></div></section>
           <section className="editor-module"><div className="module-heading"><div><span className="micro-label">CDB EXTRACTED TEXT / NOT APPROVED</span><h3>CDB 원문 후보 ({sourceCards.length}건)</h3></div></div>
@@ -161,6 +162,7 @@ export default function ImportedCardStudio({themeId,passcode,onBack}:Props){
             <pre className="iw-code">{lua.preview||'Lua 원본 없음 · 검증 미확인'}</pre><div className="module-foot"><FileQuestion size={15}/><span>이 화면은 Lua를 실행하거나 엔진 결과를 검증하지 않습니다.</span></div>
           </section>
         </>}
+        {tab==='audit'&&<AuditCenter themeId={themeId} passcode={passcode}/>}
         {tab==='history'&&<div className="editor-module"><div className="module-heading"><div><span className="micro-label">IMMUTABLE LOG / VERSIONS</span><h3>문서 변경 이력 {record.history.length}건</h3></div></div>
           {record.history.slice(0,historyLimit).map(h=><div className="iw-history-row" key={h.id}><div><Clock3 size={13}/>{dateText(h.at)} · v{h.revision} · {h.action}</div><strong>{h.field}</strong><p>이전: {h.before||'미확인'}</p><p>이후: {h.after||'미확인'}</p>{h.note&&<small>{h.note}</small>}</div>)}
           {!record.history.length&&<p className="iw-empty">변경 이력이 없어.</p>}
