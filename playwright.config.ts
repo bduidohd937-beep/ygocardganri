@@ -6,7 +6,7 @@ export default defineConfig({
   workers: 1,
   expect: { timeout: 15_000 },
   retries: 0,
-  use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', headless: true },
+  use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', headless: true, ...(process.env.CI ? { channel: 'chrome' as const } : {}) },
   webServer: {
     command: 'npm run dev -- --host 127.0.0.1 --port 4173',
     url: 'http://127.0.0.1:4173',
