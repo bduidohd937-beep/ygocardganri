@@ -3,11 +3,12 @@ on:
   push:
     branches:
       - main
-      - 'feat/**'
-      - 'perf/**'
   pull_request:
 permissions:
   contents: read
+concurrency:
+  group: ci-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
 jobs:
   test-build:
     runs-on: ubuntu-latest
