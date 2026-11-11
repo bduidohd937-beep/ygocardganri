@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - 'feat/**'
+      - 'perf/**'
   pull_request:
 permissions:
   contents: read
@@ -21,3 +22,7 @@ jobs:
       - run: npm run build
         env:
           GITHUB_PAGES: 'true'
+
+      - run: npm run check:bundle
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

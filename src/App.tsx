@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import type * as React from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import {
@@ -18,6 +18,9 @@ import type { CardPatch } from './logic';
 import { createCard, decideEffect, editCard, exportJson, proposeEffect, updateWorldStage, validateBackup } from './logic';
 import { loadWorkspace, saveWorkspace } from './storage';
 import type { StorageMode } from './storage';
+import { createCoalescedSaver } from './autosave';
+import type { SavePhase } from './autosave';
+import { buildCardIndex, searchCardIndex, visibleSlice, CARD_PAGE_SIZE, HISTORY_PAGE_SIZE } from './performance';
 
 type Page = 'home'|'themes'|'cards'|'studio'|'worlds'|'reviews'|'files'|'decks'|'history'|'settings';
 type Notice = { text:string; kind:'success'|'error'|'info' };
@@ -51,7 +54,7 @@ function SectionTitle({index,title,aside}:{index:string;title:string;aside?:stri
 
 function ArtSlot({card,world,large=false}:{card:Card;world?:World;large?:boolean}){
   return <div className={`art-slot ${large?'art-slot--large':''}`} style={{'--art-accent':world?.accent??'#8A8691'} as React.CSSProperties}>
-    {card.artUrl ? <img src={card.artUrl} alt={`${displayName(card)} 일러스트`} onError={e=>{e.currentTarget.style.display='none';}} /> :
+    {card.artUrl ? <img src={card.artUrl} loading={large ? 'eager' : 'lazy'} decoding="async" alt={`${displayName(card)} 일러스트`} onError={e=>{e.currentTarget.style.display='none';}} /> :
       <div className="art-empty"><span className="art-orbit art-orbit--one"/><span className="art-orbit art-orbit--two"/>
         <span className="art-symbol">{card.worldId==='common'?'✦':world?.shortLabel.slice(0,1)??'?'}</span>
         <div className="art-empty-label">ILLUSTRATION<br/>NOT ATTACHED</div>
@@ -87,17 +90,34 @@ export default function App(){
   const [worldDraft,setWorldDraft]=useState<{lore:string;design:string;source:string;status:'미확인'|'제안'|'검토중'|'확정'}|null>(null);
   const [selectedPhase,setSelectedPhase]=useState<0|1|2>(0);
   const [saveError,setSaveError]=useState('');
+  const [savePhase,setSavePhase]=useState<SavePhase>('saved');
+  const [cardLimit,setCardLimit]=useState(CARD_PAGE_SIZE);
+  const [historyLimit,setHistoryLimit]=useState(HISTORY_PAGE_SIZE);
+  const deferredSearch=useDeferredValue(search);
   const filePicker=useRef<HTMLInputElement>(null);
   const globalSearch=useRef<HTMLInputElement>(null);
-  const saveChain=useRef(Promise.resolve());
   const hasLoaded=useRef(false);
+  const storageModeRef=useRef(storageMode);
+  storageModeRef.current=storageMode;
+  const saverRef=useRef<ReturnType<typeof createCoalescedSaver<StudioData>>|null>(null);
+  if(!saverRef.current) saverRef.current=createCoalescedSaver<StudioData>(
+    snapshot=>saveWorkspace(snapshot,storageModeRef.current),450,
+    (phase)=>{setSavePhase(phase);setSaveError(phase==='error'?'자동 저장에 실패했습니다. JSON으로 백업하세요.':'');}
+  );
 
   useEffect(()=>{let alive=true;loadWorkspace().then(result=>{if(!alive)return;setData(result.data);setStorageMode(result.mode);hasLoaded.current=true;}).catch(()=>{
     if(alive){setData(createInitialData());setStorageMode('localStorage');hasLoaded.current=true;setNotice({text:'로컬 저장소를 사용할 수 없습니다. JSON 백업을 활용하세요.',kind:'error'});}
   });return()=>{alive=false;};},[]);
   useEffect(()=>{if(!data||!hasLoaded.current)return;
-    saveChain.current=saveChain.current.catch(()=>undefined).then(()=>saveWorkspace(data,storageMode)).then(()=>setSaveError('')).catch(()=>setSaveError('자동 저장에 실패했습니다. JSON으로 백업하세요.'));
+    saverRef.current?.schedule(data);
   },[data,storageMode]);
+  useEffect(()=>{
+    const flushOnHidden=()=>{if(document.visibilityState==='hidden')void saverRef.current?.flush();};
+    const flushOnPageHide=()=>{void saverRef.current?.flush();};
+    document.addEventListener('visibilitychange',flushOnHidden);
+    window.addEventListener('pagehide',flushOnPageHide);
+    return()=>{document.removeEventListener('visibilitychange',flushOnHidden);window.removeEventListener('pagehide',flushOnPageHide);void saverRef.current?.flush();};
+  },[]);
   useEffect(()=>{function keys(e:KeyboardEvent){if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();globalSearch.current?.focus();}if(e.key==='Escape')setMobileNav(false);}document.addEventListener('keydown',keys);return()=>document.removeEventListener('keydown',keys);},[]);
   useEffect(()=>{if(!notice)return;const t=setTimeout(()=>setNotice(null),4200);return()=>clearTimeout(t);},[notice]);
   const inform=useCallback((text:string,kind:Notice['kind']='success')=>setNotice({text,kind}),[]);
@@ -115,15 +135,14 @@ export default function App(){
       reviewing:data.cards.filter(c=>c.approval==='검토중'||c.ocg==='검토중'||c.balance==='검토중').length,
       unknown:countUnknown(data)};
   },[data]);
-  const filteredCards=useMemo(()=>{
-    if(!data)return [];
-    const query=search.trim().toLocaleLowerCase();
-    return data.cards.filter(c=>{
-      const world=worldOf(data,c);
-      return (worldFilter==='all'||c.worldId===worldFilter) && (stageFilter==='all'||String(c.phase)===stageFilter) &&
-        (!query||[displayName(c),world?.name||'공통',c.effect,c.notes,c.source,c.id].join(' ').toLocaleLowerCase().includes(query));
-    });
-  },[data,search,worldFilter,stageFilter]);
+  // Rebuild only on card/world edits, not on each search keystroke or history update.
+  const searchIndex=useMemo(()=>buildCardIndex(data?.cards??[],data?.worlds??[]),[data?.cards,data?.worlds]);
+  const filteredCards=useMemo(()=>searchCardIndex(searchIndex,{
+    text:deferredSearch,worldId:worldFilter,phase:stageFilter,
+  }),[searchIndex,deferredSearch,worldFilter,stageFilter]);
+  const shownCards=useMemo(()=>visibleSlice(filteredCards,cardLimit),[filteredCards,cardLimit]);
+  const shownHistory=useMemo(()=>visibleSlice(data?.history??[],historyLimit),[data?.history,historyLimit]);
+  useEffect(()=>{setCardLimit(CARD_PAGE_SIZE);},[deferredSearch,worldFilter,stageFilter]);
   const saveCardDetails=(event:FormEvent<HTMLFormElement>)=>{
     event.preventDefault();if(!data||!selected)return;
     const changes={...draft};
@@ -183,7 +202,7 @@ export default function App(){
         {NAV.filter(i=>i.group==='tools').map(i=><button key={i.key} className={`nav-link ${page===i.key?'nav-link--active':''}`} onClick={()=>go(i.key)}><i.icon size={17} strokeWidth={1.7}/><span>{i.name}</span>{i.key==='reviews'&&counts.pending>0&&<em>{counts.pending}</em>}</button>)}
         <div className="sidebar-projects"><div className="sidebar-caption">PROJECTS</div><button className="project-link" onClick={()=>go('themes')}><span className="project-orb">✦</span><span><strong>종언성서 — 녹투르나</strong><small>무명성서 · 세계 5</small></span></button></div>
       </div>
-      <div className="sidebar-bottom"><div className="storage-dot"/><div><strong>로컬 워크스페이스</strong><span>{storageMode} 자동 저장</span></div><button onClick={()=>go('settings')} aria-label="백업 설정"><Settings2 size={16}/></button></div>
+      <div className="sidebar-bottom"><div className="storage-dot"/><div><strong>로컬 워크스페이스</strong><span>{storageMode} · {savePhase==='pending'?'저장 대기':savePhase==='writing'?'저장 중':savePhase==='error'?'저장 실패':'저장 완료'}</span></div><button onClick={()=>go('settings')} aria-label="백업 설정"><Settings2 size={16}/></button></div>
     </aside>
     {mobileNav&&<div className="mobile-scrim" onClick={()=>setMobileNav(false)}/>}
     <div className="main-area">
@@ -215,10 +234,11 @@ export default function App(){
         {page==='cards'&&<><PageHeading eyebrow="CARDS / ARCHIVE" title="카드 라이브러리" subtitle="설계 문서와 상태를 검색하고 카드별 작업실에서 수정할 수 있습니다." action={<button className="primary-button" onClick={createNewCard}><Plus size={16}/> 새 카드 문서</button>}/>
           <div className="filter-bar"><div className="filter-head"><SlidersHorizontal size={17}/><span>필터</span></div><label>세계 <select value={worldFilter} onChange={e=>setWorldFilter(e.target.value)}><option value="all">모든 세계</option>{data.worlds.map(w=><option value={w.id} key={w.id}>{w.name}</option>)}<option value="common">공통 카드</option></select></label><label>단계 <select value={stageFilter} onChange={e=>setStageFilter(e.target.value)}><option value="all">전체 단계</option><option value="0">첫 고난</option><option value="1">1차 진화</option><option value="2">2차 진화</option><option value="-1">공통 기본형</option></select></label><span className="results-count">{filteredCards.length}개 문서</span></div>
           <div className="card-table"><div className="card-table-head"><span>카드 / 단계</span><span>세계</span><span>효과 원문</span><span>일러스트</span><span>Lua</span><span>최종 수정</span></div>
-            {filteredCards.length===0?<Empty icon={<Filter size={25}/>} title="검색 결과가 없습니다" detail="다른 검색어 또는 필터로 다시 확인하세요."/>:filteredCards.map(c=>{
+            {filteredCards.length===0?<Empty icon={<Filter size={25}/>} title="검색 결과가 없습니다" detail="다른 검색어 또는 필터로 다시 확인하세요."/>:shownCards.map(c=>{
               const w=worldOf(data,c);return <button className="card-row" key={c.id} onClick={()=>openCard(c.id)}><span className="row-name"><span className="row-thumbnail" style={{'--realm':w?.accent??'#A5A5B0'} as React.CSSProperties}>{w?.shortLabel.slice(0,1)??'✦'}</span><span><strong>{displayName(c)}</strong><small>{cardPhase(c)} · v{c.version}</small></span></span><span>{w?.name??'공통 기본형'}</span><span>{c.effect?<Status small value="원문 등록"/>:<Status small value={UNKNOWN}/>}</span><span><Status small value={c.artStatus}/></span><span><Status small value={c.lua}/></span><span className="row-date">{byDate(c.updatedAt)} <ChevronRight size={16}/></span></button>;
             })}
           </div>
+          {shownCards.length<filteredCards.length&&<div className="more-results"><span>{shownCards.length.toLocaleString('ko-KR')} / {filteredCards.length.toLocaleString('ko-KR')}개 표시</span><button className="outline-button" onClick={()=>setCardLimit(n=>n+CARD_PAGE_SIZE)}>다음 {Math.min(CARD_PAGE_SIZE,filteredCards.length-shownCards.length)}개 보기 <ChevronDown size={16}/></button></div>}
         </>}
         {page==='studio'&&selected&&<>
           <div className="studio-breadcrumb"><button onClick={()=>go('cards')}><ArrowLeft size={15}/> 카드 라이브러리</button><span>/</span><strong>{displayName(selected)}</strong></div>
@@ -248,7 +268,7 @@ export default function App(){
         {page==='reviews'&&<><PageHeading eyebrow="QUALITY CONTROL / QUEUE" title="검수 센터" subtitle="승인 보류, 규칙 검토, 구현 검증이 필요한 문서를 별도로 추적합니다."/><div className="metrics-row"><MiniMetric label="미승인 효과 제안" value={counts.pending} foot="승인 전 원문 변경 금지"/><MiniMetric label="검토 상태 카드" value={counts.reviewing} foot="검토중 상태 기준"/><MiniMetric label="미확인 필드" value={counts.unknown} foot="확정 또는 검증 전"/></div><SectionTitle index="01" title="검수 대상 카드" aside="UNVERIFIED ITEMS"/><div className="review-table">{data.cards.map(c=><button key={c.id} onClick={()=>openCard(c.id)} className="review-row"><div><strong>{displayName(c)}</strong><small>{worldOf(data,c)?.name??'공통'}</small></div><div>OCG <Status small value={c.ocg}/></div><div>밸런스 <Status small value={c.balance}/></div><div>Lua <Status small value={c.lua}/></div><ChevronRight size={16}/></button>)}</div></>}
         {page==='files'&&<><PageHeading eyebrow="ASSETS / INTEGRATION" title="파일 센터" subtitle="CDB·Lua·이미지·YDK 자료를 카드 ID로 연결하는 기능을 준비하는 공간입니다."/><div className="not-yet"><div className="not-yet-icon"><FileArchive size={30}/></div><span className="micro-label">COMING IN PHASE 02</span><h2>안전한 파일 인덱싱을 준비 중입니다.</h2><p>현재 버전에는 업로드·CDB 파싱·Lua 실행 기능이 없습니다. 원본을 임의로 수정하거나 검증된 것으로 표시하지 않습니다.</p><div className="file-type-grid">{[{t:'CDB',i:Database,d:'SQLite 카드 데이터'},{t:'Lua',i:FileCode2,d:'EDOPro 스크립트'},{t:'이미지',i:ImageIcon,d:'카드 ID별 일러스트'},{t:'YDK',i:FileText,d:'덱 레시피'},{t:'ZIP',i:FileArchive,d:'시험 패키지'}].map(f=><div key={f.t}><f.i size={20}/><strong>{f.t}</strong><small>{f.d}</small></div>)}</div></div></>}
         {page==='decks'&&<><PageHeading eyebrow="DECK LAB / ROADMAP" title="덱 연구실" subtitle="덱 구성, 초동 확률, 전개 루트, 리플레이를 연결할 작업 공간입니다."/><div className="not-yet"><Activity size={30}/><span className="micro-label">COMING IN PHASE 05</span><h2>덱 분석 데이터가 아직 없습니다.</h2><p>YDK 가져오기 및 내보내기, 40~60장 덱 최적화, 전개 경로와 확률 분석은 후속 단계에서 구현합니다.</p></div></>}
-        {page==='history'&&<><PageHeading eyebrow="CHANGE HISTORY / AUDIT LOG" title="변경 이력" subtitle="승인된 카드 원문과 제안, 카드 정보 및 세계관 수정 기록을 추적합니다."/><div className="history-list">{data.history.length===0?<Empty icon={<History size={28}/>} title="기록이 비어 있습니다" detail="카드 정보 수정과 효과 제안, 승인 결과가 이곳에 쌓입니다."/>:data.history.map(h=><HistoryItem key={h.id} item={h}/>)}</div></>}
+        {page==='history'&&<><PageHeading eyebrow="CHANGE HISTORY / AUDIT LOG" title="변경 이력" subtitle="승인된 카드 원문과 제안, 카드 정보 및 세계관 수정 기록을 추적합니다."/><div className="history-list">{data.history.length===0?<Empty icon={<History size={28}/>} title="기록이 비어 있습니다" detail="카드 정보 수정과 효과 제안, 승인 결과가 이곳에 쌓입니다."/>:shownHistory.map(h=><HistoryItem key={h.id} item={h}/>)}</div>{shownHistory.length<data.history.length&&<div className="more-results"><span>{shownHistory.length.toLocaleString('ko-KR')} / {data.history.length.toLocaleString('ko-KR')}건 표시</span><button className="outline-button" onClick={()=>setHistoryLimit(n=>n+HISTORY_PAGE_SIZE)}>다음 이력 {Math.min(HISTORY_PAGE_SIZE,data.history.length-shownHistory.length)}건 보기 <ChevronDown size={16}/></button></div>}</>}
         {page==='settings'&&<><PageHeading eyebrow="DATA MANAGEMENT" title="백업 · 설정" subtitle="자료는 현재 브라우저에 저장됩니다. 중요한 변경 사항은 정기적으로 JSON 백업을 받아 보관하세요."/><div className="settings-grid"><div className="settings-panel"><Database size={25}/><h2>데이터 보관</h2><p>현재 저장 방식: <strong>{storageMode}</strong></p><small>서버 동기화는 구현되지 않았습니다. 다른 기기에서는 JSON 백업을 가져와야 합니다. 브라우저 데이터 삭제 시 복구할 수 없습니다.</small></div><div className="settings-panel"><Download size={25}/><h2>백업 내보내기</h2><p>테마·카드·효과 제안·승인 및 변경 이력을 포함한 JSON 파일을 생성합니다.</p><button className="primary-button" onClick={exportBackup}><Download size={16}/> 전체 JSON 내보내기</button></div><div className="settings-panel"><Upload size={25}/><h2>백업 가져오기</h2><p>구조가 유효한 V1 백업만 읽습니다. 기존 데이터를 교체하기 전에 확인합니다.</p><input ref={filePicker} type="file" accept="application/json,.json" onChange={e=>void importBackup(e.target.files?.[0]??null)} hidden/><button className="outline-button" onClick={()=>filePicker.current?.click()}><Upload size={16}/> JSON 불러오기</button></div><div className="settings-panel settings-panel--danger"><ShieldAlert size={25}/><h2>초기 데이터 복원</h2><p>진행 중인 변경 사항이 사라집니다. 먼저 백업을 저장하세요.</p><button className="danger-button" onClick={reset}>초기 상태로 되돌리기</button></div></div><div className="note-line"><Info size={16}/>V2 독립형 HTML 백업은 구조가 다릅니다. V2 → 신규 스키마 이관기는 별도 검증 후 추가합니다.</div></>}
       </main>
       <footer className="footer"><span>YGO CARD STUDIO <em>ALPHA / 0.1</em></span><span>확정과 검증은 별도 상태 · 미확인 정보는 추정하지 않습니다.</span></footer>
