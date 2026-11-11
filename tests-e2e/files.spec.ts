@@ -14,6 +14,9 @@ const lua='local s,id=GetID()\nfunction s.initial_effect(c)\nend\n';
 const deck='#created by e2e\n#main\n91008601\n91008601\n#extra\n!side\n';
 
 test('P2: 신규 테마 만들기 → CDB/Lua/YDK 파일 분석 → 보관 → 재진입 및 원본 다운로드',async({page})=>{
+  const browserErrors:string[]=[];
+  page.on('pageerror',e=>browserErrors.push(e.message));
+  page.on('console',m=>{if(m.type()==='error')browserErrors.push(m.text());});
   await page.goto('/');
   await expect(page.locator('.realm-tile')).toHaveCount(5);
   await page.locator('.sidebar .nav-link').filter({hasText:'테마 라이브러리'}).click();
@@ -28,7 +31,8 @@ test('P2: 신규 테마 만들기 → CDB/Lua/YDK 파일 분석 → 보관 → �
     {name:'c91008601.lua',mimeType:'text/plain',buffer:Buffer.from(lua)},
     {name:'예시_덱.ydk',mimeType:'text/plain',buffer:Buffer.from(deck)},
   ]);
-  await expect(page.locator('.fc-preview')).toBeVisible({timeout:30000});
+  try { await expect(page.locator('.fc-preview')).toBeVisible({timeout:30000}); }
+  catch(e){const errorBox=await page.locator('.fc-error').allTextContents();const progress=await page.locator('.fc-progress').allTextContents();throw new Error(`CDB 최초 업로드 오류: ${JSON.stringify({errorBox,progress,browserErrors})} / ${e}`);}
   await expect(page.locator('.fc-preview-list>div')).toHaveCount(3);
   await expect(page.locator('.fc-preview-list')).toContainText('c91008601.lua');
   await page.getByRole('button',{name:/원본 보관 확정/}).click();
