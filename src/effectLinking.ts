@@ -266,7 +266,7 @@ export function mapNumberedEffects(input:AuditInput,src:LuaAuditSource):EffectLi
     const candidates=observed.get(i)||[];
     if(candidates.length!==1)continue;
     const candidate=candidates[0];
-    const competitor=parsedText.parts.some((part,j)=>j!==i&&(observed.get(j)||[]).includes(candidate));
+    const competitor=parsedText.parts.some((_,j)=>j!==i&&(observed.get(j)||[]).includes(candidate));
     if(!competitor)chosen.set(i,candidate);
   }
   if(!baselineUnknown&&parsedText.parts.length===1&&registered.length===1&&!chosen.has(0)){
