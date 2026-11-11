@@ -47,11 +47,11 @@ function combinations(n:number,k:number):number{
 export function combinationMetrics(main:readonly string[],plan:CombinationPlan,hand:5|6):CombinationMetrics{
   if(!validateCombinationPlan(plan))throw new Error('조합 초동 설정이 유효하지 않습니다.');
   const total=main.length;
-  if(total>60)throw new Error('조합 계산은 메인 덱 60장까지 지원합니다.');
   const base={canCalculate:false,total,hand,anyRoute:null,noRoute:null,
     perRoute:plan.routes.map(r=>({id:r.id,label:r.label,probability:null})),
     withRisk:null,withoutRisk:null,failedWithRisk:null,riskChance:null} satisfies CombinationMetrics;
-  if(plan.routes.length===0||total===0||hand>total)return base;
+  // Oversized imported YDKs remain viewable, but cannot enter the bounded DP calculation.
+  if(total>60||plan.routes.length===0||total===0||hand>total)return base;
 
   const routes=plan.routes;
   const aSets=routes.map(r=>new Set(r.a)),bSets=routes.map(r=>new Set(r.b));
