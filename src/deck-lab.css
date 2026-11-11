@@ -1,0 +1,68 @@
+.decklab-shell{margin:18px 0 48px;color:#e5e4e1;display:grid;gap:18px}
+.decklab-header{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:26px;background:#151b22;border:1px solid #323b46;border-radius:5px}
+.decklab-header h2{font-family:'Noto Serif KR',Georgia,serif;font-size:24px;margin:8px 0;color:#f0eae3}
+.decklab-header p{color:#aab5c0;font-size:12px;line-height:1.7;max-width:700px;margin:0}
+.decklab-header p strong{color:#d7d1ca}.decklab-header-badge{display:flex;align-items:center;gap:8px;border:1px solid #544a4a;padding:12px;color:#cb9690;white-space:nowrap;font:11px 'DM Mono',monospace}
+.decklab-toolbar{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:12px}
+.decklab-toolbar label,.decklab-notes label,.decklab-add label{display:flex;flex-direction:column;gap:8px;font-size:11px;color:#abb6c1}
+.decklab-toolbar select,.decklab-notes input,.decklab-notes textarea,.decklab-add input,.decklab-subhead select{width:100%;background:#111820;border:1px solid #3b4652;color:#eee9e4;border-radius:3px;padding:10px;min-height:40px;min-width:0}
+.decklab-toolbar select:focus-visible,.decklab-notes input:focus-visible,.decklab-add input:focus-visible{border-color:#ba7771}
+.decklab-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.decklab-actions .outline-button,.decklab-actions .primary-button{display:flex;align-items:center;gap:7px}
+.decklab-save-state{font-size:11px;color:#8ab59c}.decklab-save-state.is-dirty{color:#d6b178}
+.decklab-notice{border:1px solid #385c4c;background:#14271f;color:#a3d1b0;border-radius:4px;padding:12px 15px;font-size:12px}
+.decklab-notice--error{border-color:#7d4b4b;background:#2d1a1b;color:#eab3ae}
+.decklab-notice--info{border-color:#465b70;background:#182431;color:#a9c1df}
+.decklab-empty{padding:56px 20px;border:1px dashed #434b56;text-align:center;color:#a9b1ba;display:grid;justify-items:center;gap:14px}
+.decklab-empty h3{color:#f0ece7;margin:0}.decklab-empty p{font-size:13px;max-width:500px;line-height:1.7;margin:0}
+.decklab-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+.decklab-stats>div{background:#171c23;border:1px solid #363e49;padding:18px;display:grid;gap:6px}
+.decklab-stats span{font-size:11px;color:#a7b0bc}.decklab-stats strong{font-size:31px;font-weight:500;font-variant-numeric:tabular-nums;color:#f0eae3}
+.decklab-stats small{font-size:10px;color:#8795a3}
+.decklab-warnings{display:flex;gap:12px;border:1px solid #806a48;background:#272219;padding:14px;color:#e0c499}
+.decklab-warnings svg{flex:0 0 auto}.decklab-warnings strong{font-size:12px}.decklab-warnings p{font-size:11px;margin:8px 0 0;line-height:1.5}
+.decklab-notes{display:grid;grid-template-columns:1fr 2fr;gap:16px;padding:16px;background:#161d24;border:1px solid #313943}
+.decklab-notes textarea{resize:vertical;min-height:40px}
+.decklab-subhead{display:flex;justify-content:space-between;align-items:end;gap:18px;border-bottom:1px solid #343d45;padding-bottom:12px}
+.decklab-subhead h3{font-family:'Noto Serif KR',Georgia,serif;font-size:20px;margin:6px 0 0;color:#eae6e2}
+.decklab-subhead>span{font-size:11px;color:#8e9aa7}
+.decklab-subhead label{font-size:12px;color:#b7c1cd;display:flex;gap:10px;align-items:center}
+.decklab-subhead select{width:auto;min-width:104px}
+.decklab-role-strip{display:flex;flex-wrap:wrap;gap:9px}
+.decklab-role-strip span{font-size:11px;color:#a7b1bf;background:#171f29;border:1px solid #35404d;padding:9px 11px}
+.decklab-role-strip strong{color:#e8e3dd}
+.decklab-prob-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.decklab-probability{padding:20px;background:#161d24;border:1px solid #333f4a;display:grid;gap:10px}
+.decklab-probability>span{font-size:12px;color:#afb8c2}.decklab-probability strong{font-size:27px;font-weight:500;color:#ece8e3;font-variant-numeric:tabular-nums}
+.decklab-probability small{font-size:10px;line-height:1.5;color:#9eabb8}
+.decklab-probability-track{height:5px;background:#303a43;overflow:hidden;border-radius:5px}
+.decklab-probability-track i{display:block;height:100%;background:#a65b59;transition:width .2s}
+.decklab-assumption{font-size:11px;color:#a9b5c0;line-height:1.7;display:flex;gap:10px;align-items:start;margin:0}
+.decklab-assumption svg{flex:0 0 auto;color:#ba9477}
+.decklab-add{display:flex;align-items:end;gap:10px;flex-wrap:wrap}
+.decklab-add label{min-width:200px}.decklab-add small{font-size:11px;color:#91a0ae}
+.decklab-add button{display:flex;align-items:center;gap:8px}
+.decklab-list{border:1px solid #343d48;background:#151a21;max-height:640px;overflow:auto}
+.decklab-row{display:grid;grid-template-columns:minmax(140px,1.3fr) minmax(115px,.5fr) minmax(290px,2fr);gap:12px;padding:13px 15px;border-bottom:1px solid #303943;align-items:center;font-size:12px}
+.decklab-row:last-child{border-bottom:0}.decklab-row--head{position:sticky;top:0;background:#202730;color:#a9b7c4;z-index:1;font-size:10px;letter-spacing:.04em}
+.decklab-card-name{min-width:0;display:grid;gap:5px}.decklab-card-name strong{overflow-wrap:anywhere;font-weight:500;color:#e8e3dc}.decklab-card-name small{font:11px 'DM Mono',monospace;color:#94a2ae}
+.decklab-copy{display:flex;align-items:center;gap:12px}.decklab-copy button{width:26px;height:26px;background:#242e39;border:1px solid #46515c;color:#e3e3df;border-radius:3px}
+.decklab-copy button:disabled{opacity:.3}.decklab-copy strong{min-width:10px;text-align:center;color:#f1eae2;font-variant-numeric:tabular-nums}
+.decklab-tag-list{display:flex;flex-wrap:wrap;gap:6px}
+.decklab-tag-list label{font-size:10px;cursor:pointer;position:relative}
+.decklab-tag-list input{position:absolute;width:1px;height:1px;opacity:0}
+.decklab-tag-list label span{display:block;padding:7px 10px;background:#1d2730;border:1px solid #3b4751;border-radius:3px;color:#9ba9b6}
+.decklab-tag-list input:checked+span{background:#3b302e;border-color:#af7569;color:#f3d1c4}
+.decklab-tag-list input:focus-visible+span{outline:2px solid #c68e84}
+.decklab-tag-list input:disabled+span{opacity:.65;cursor:default}
+.decklab-extras{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.decklab-extras>div{padding:18px;border:1px solid #343e49;max-height:280px;overflow:auto}
+.decklab-extras h3{margin:0 0 15px;font-size:13px;font-weight:500}
+.decklab-extras p{margin:8px 0;display:flex;gap:10px;justify-content:space-between;font-size:11px;color:#bcc5cd}
+.decklab-extras code{font:11px 'DM Mono',monospace;color:#ba958e}
+.decklab-extras span{flex:1}
+.decklab-foot{display:flex;align-items:start;gap:10px;color:#8eac9f;font-size:11px;line-height:1.6}
+@media(max-width:1050px){.decklab-row{grid-template-columns:minmax(110px,1fr) 100px minmax(200px,1.6fr)}}
+@media(max-width:800px){.decklab-toolbar{grid-template-columns:1fr}.decklab-notes{grid-template-columns:1fr}.decklab-stats{grid-template-columns:repeat(2,1fr)}.decklab-row{grid-template-columns:minmax(100px,1fr) 90px;gap:10px}.decklab-row>div:last-child{grid-column:1/-1}.decklab-row--head span:last-child{display:none}.decklab-header{flex-wrap:wrap}}
+@media(max-width:560px){.decklab-prob-grid,.decklab-extras{grid-template-columns:1fr}.decklab-stats strong{font-size:25px}.decklab-header{padding:18px}.decklab-header h2{font-size:20px}.decklab-actions .outline-button,.decklab-actions .primary-button{font-size:11px}}
+@media(prefers-reduced-motion:reduce){.decklab-probability-track i{transition:none}}
