@@ -22,10 +22,11 @@ import { createCoalescedSaver } from './autosave';
 import type { SavePhase } from './autosave';
 import FileCenter from './FileCenter';
 import ImportedCardStudio from './ImportedCardStudio';
+import AuditCenter from './AuditCenter';
 import { loadAllImportedRecords, restoreWorkbenchBackup, validateWorkbenchBackup } from './workbenchVault';
 import { buildCardIndex, searchCardIndex, visibleSlice, CARD_PAGE_SIZE, HISTORY_PAGE_SIZE } from './performance';
 
-type Page = 'home'|'themes'|'cards'|'studio'|'worlds'|'reviews'|'files'|'decks'|'history'|'settings';
+type Page = 'home'|'themes'|'cards'|'studio'|'worlds'|'reviews'|'audit'|'files'|'decks'|'history'|'settings';
 type Notice = { text:string; kind:'success'|'error'|'info' };
 const NAV: { key:Page; name:string; group:'workspace'|'tools'; icon: typeof LayoutGrid }[] = [
   {key:'home',name:'대시보드',group:'workspace',icon:LayoutGrid},
@@ -33,6 +34,7 @@ const NAV: { key:Page; name:string; group:'workspace'|'tools'; icon: typeof Layo
   {key:'cards',name:'카드 라이브러리',group:'workspace',icon:Layers3},
   {key:'worlds',name:'세계관 · 진화 계보',group:'workspace',icon:GitCompareArrows},
   {key:'reviews',name:'검수 센터',group:'tools',icon:ShieldCheck},
+  {key:'audit',name:'오류 분석',group:'tools',icon:ShieldAlert},
   {key:'files',name:'파일 센터',group:'tools',icon:FolderOpen},
   {key:'decks',name:'덱 연구실',group:'tools',icon:Activity},
   {key:'history',name:'변경 이력',group:'tools',icon:History},
@@ -299,6 +301,7 @@ export default function App(){
               const item=selectedRealm.stages[selectedPhase];setWorldDraft({lore:item.lore,design:item.design,source:item.source,status:item.status});
             }}><Settings2 size={16}/> 수정</button></div>{worldDraft?<form onSubmit={e=>{e.preventDefault();mutate(d=>updateWorldStage(d,selectedRealm.id,selectedPhase,worldDraft));setWorldDraft(null);inform('세계관 기록을 업데이트했습니다.');}}><Field label="서사 및 사건"><textarea rows={4} value={worldDraft.lore} onChange={e=>setWorldDraft({...worldDraft,lore:e.target.value})}/></Field><Field label="디자인 방향"><textarea rows={3} value={worldDraft.design} onChange={e=>setWorldDraft({...worldDraft,design:e.target.value})}/></Field><Field label="정보 출처"><input value={worldDraft.source} onChange={e=>setWorldDraft({...worldDraft,source:e.target.value})}/></Field><Field label="확인 상태"><select value={worldDraft.status} onChange={e=>setWorldDraft({...worldDraft,status:e.target.value as typeof worldDraft.status})}>{['미확인','제안','검토중','확정'].map(v=><option key={v}>{v}</option>)}</select></Field><div className="form-actions"><button type="button" className="outline-button" onClick={()=>setWorldDraft(null)}>취소</button><button type="submit" className="primary-button"><Save size={15}/> 변경 기록 저장</button></div></form>:<div className="world-story"><div><span>서사 / 고난</span><p>{selectedRealm.stages[selectedPhase].lore||'미확인 · 사건 및 장면 미등록'}</p></div><div><span>캐릭터 디자인</span><p>{selectedRealm.stages[selectedPhase].design||'미확인 · 디자인 원문 미등록'}</p></div><div><span>기록 출처</span><p>{selectedRealm.stages[selectedPhase].source||'미확인'}</p></div></div>}</section><div className="related-card"><span>연결된 카드 문서</span>{data.cards.some(c=>c.worldId===selectedRealm.id&&c.phase===selectedPhase)?<><strong>{displayName(data.cards.find(c=>c.worldId===selectedRealm.id&&c.phase===selectedPhase)!)}</strong><button onClick={()=>{const c=data.cards.find(c=>c.worldId===selectedRealm.id&&c.phase===selectedPhase);if(c)openCard(c.id);}}>카드 작업실로 이동 <ArrowRight size={16}/></button></>:<strong>미확인 · 연결된 카드 없음</strong>}</div></>}
         {page==='reviews'&&<><PageHeading eyebrow="QUALITY CONTROL / QUEUE" title="검수 센터" subtitle="승인 보류, 규칙 검토, 구현 검증이 필요한 문서를 별도로 추적합니다."/><div className="metrics-row"><MiniMetric label="미승인 효과 제안" value={counts.pending} foot="승인 전 원문 변경 금지"/><MiniMetric label="검토 상태 카드" value={counts.reviewing} foot="검토중 상태 기준"/><MiniMetric label="미확인 필드" value={counts.unknown} foot="확정 또는 검증 전"/></div><SectionTitle index="01" title="검수 대상 카드" aside="UNVERIFIED ITEMS"/><div className="review-table">{data.cards.map(c=><button key={c.id} onClick={()=>openCard(c.id)} className="review-row"><div><strong>{displayName(c)}</strong><small>{worldOf(data,c)?.name??'공통'}</small></div><div>OCG <Status small value={c.ocg}/></div><div>밸런스 <Status small value={c.balance}/></div><div>Lua <Status small value={c.lua}/></div><ChevronRight size={16}/></button>)}</div></>}
+        {page==='audit'&&<AuditCenter onOpenCard={openImportedCard}/>}
         {page==='files'&&<FileCenter view="files" onOpenCard={openImportedCard}/>}
         {page==='decks'&&<><PageHeading eyebrow="DECK LAB / ROADMAP" title="덱 연구실" subtitle="덱 구성, 초동 확률, 전개 루트, 리플레이를 연결할 작업 공간입니다."/><div className="not-yet"><Activity size={30}/><span className="micro-label">COMING IN PHASE 05</span><h2>덱 분석 데이터가 아직 없습니다.</h2><p>YDK 가져오기 및 내보내기, 40~60장 덱 최적화, 전개 경로와 확률 분석은 후속 단계에서 구현합니다.</p></div></>}
         {page==='history'&&<><PageHeading eyebrow="CHANGE HISTORY / AUDIT LOG" title="변경 이력" subtitle="승인된 카드 원문과 제안, 카드 정보 및 세계관 수정 기록을 추적합니다."/><div className="history-list">{data.history.length===0?<Empty icon={<History size={28}/>} title="기록이 비어 있습니다" detail="카드 정보 수정과 효과 제안, 승인 결과가 이곳에 쌓입니다."/>:shownHistory.map(h=><HistoryItem key={h.id} item={h}/>)}</div>{shownHistory.length<data.history.length&&<div className="more-results"><span>{shownHistory.length.toLocaleString('ko-KR')} / {data.history.length.toLocaleString('ko-KR')}건 표시</span><button className="outline-button" onClick={()=>setHistoryLimit(n=>n+HISTORY_PAGE_SIZE)}>다음 이력 {Math.min(HISTORY_PAGE_SIZE,data.history.length-shownHistory.length)}건 보기 <ChevronDown size={16}/></button></div>}</>}
