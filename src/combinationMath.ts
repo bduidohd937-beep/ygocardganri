@@ -34,7 +34,7 @@ export function parseIdList(text:string,allowEmpty=false):string[]{
   const fields=s.split(/[\s,，;]+/).filter(Boolean);
   if(fields.some(id=>!validId(id)))throw new Error('카드 ID는 유효한 양의 정수여야 합니다. 여러 ID는 쉼표로 구분하세요.');
   const unique=[...new Set(fields)];
-  if(unique.length>20)throw new Error('한 그룹에는 카드 ID를 최대 20개만 입력할 수 있습니다.');
+  if(unique.length>12)throw new Error('A/B 그룹에는 카드 ID를 최대 12개만 입력할 수 있습니다.');
   return unique;
 }
 function combinations(n:number,k:number):number{
