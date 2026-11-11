@@ -2,3 +2,10 @@
 @media(max-width:1150px){.fc-theme-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.fc-theme-form{grid-template-columns:1fr 1fr}.fc-preview-list>div{grid-template-columns:50px 1fr 1fr}.fc-preview-list>div small{display:none}}
 @media(max-width:650px){.fc-theme-grid{grid-template-columns:1fr}.fc-section-heading{flex-wrap:wrap}.fc-file-select{flex-wrap:wrap}.fc-file-select label{width:100%}.fc-theme-form{grid-template-columns:1fr}.fc-stat-grid>div{padding:13px}.fc-stat-grid strong{font-size:22px}.fc-preview{padding:14px}.fc-preview-list>div{grid-template-columns:45px 1fr}.fc-preview-list>div span:not(.fc-kind){display:none}.fc-preview-list em{grid-column:1/-1}.fc-subheading{flex-wrap:wrap}.fc-filter{width:100%}.fc-filter input{flex:1;width:100%}.fc-file-row .outline-button{font-size:10px;padding:7px}.fc-file-icon{display:none}}
 @media(prefers-reduced-motion:reduce){.fc-spin{animation:none}}
+
+/* P3: clickable CDB index rows, without altering the P2 table grid. */
+.fc-index-list .fc-open-index{display:grid;grid-template-columns:105px minmax(160px,1fr) minmax(150px,1fr);align-items:center;gap:12px;padding:12px;border-bottom:1px solid #303843;background:transparent;border-left:0;border-right:0;border-top:0;color:#e8e5e0;text-align:left;width:100%;cursor:pointer;font:inherit}
+.fc-index-list .fc-open-index:hover{background:#252b32}
+.fc-index-list .fc-open-index strong{min-width:0;overflow-wrap:anywhere}
+.fc-index-list .fc-open-index span{color:#a4adb9;font-size:12px}
+@media(max-width:700px){.fc-index-list .fc-open-index{grid-template-columns:1fr;gap:6px}}
