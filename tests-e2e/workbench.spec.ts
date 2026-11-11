@@ -34,7 +34,7 @@ test('P3: 외부 테마 카드 → CDB 후보 → 명시 승인 → 검수 기�
   await expect(page.locator('.iw-text--approved')).toContainText('미확인');
   await page.getByRole('button',{name:'명시 승인'}).click();
   await expect(page.locator('.iw-text--approved')).toContainText('①: 이 카드를 패에 넣는다.');
-  await page.getByLabel('Lua 스크립트 검수 상태').selectOption('검토중');
+  await page.getByLabel('Lua 스크립트 검수 상태').selectOption('진행중');
   await page.getByRole('button',{name:'파일 · Lua'}).click();
   await expect(page.locator('.iw-code')).toContainText('initial_effect');
   await page.reload();
@@ -43,7 +43,7 @@ test('P3: 외부 테마 카드 → CDB 후보 → 명시 승인 → 검수 기�
   await expect(page.locator('.results-count')).toContainText('16개');
   await page.locator('.fc-workbench-list').last().getByRole('button',{name:/P3 검증 카드/}).click();
   await expect(page.locator('.iw-text--approved')).toContainText('①: 이 카드를 패에 넣는다.');
-  await expect(page.getByLabel('Lua 스크립트 검수 상태')).toHaveValue('검토중');
+  await expect(page.getByLabel('Lua 스크립트 검수 상태')).toHaveValue('진행중');
   await page.getByRole('button',{name:'변경 이력'}).last().click();
   await expect(page.locator('.iw-history-row')).toHaveCount(4);
   await page.getByRole('button',{name:/카드 라이브러리/}).last().click();
