@@ -8,6 +8,8 @@ async function fixture(){
 }
 
 test('P4: imported CDB/Lua evidence → static analyzer → persistent manual triage and JSON report',async({page})=>{
+  const pageErrors:string[]=[];
+  page.on('pageerror',error=>pageErrors.push(error.message));
   page.on('dialog',dialog=>void dialog.accept('근거: Lua ID 일치성 확인 필요'));
   await page.goto('/');
   await expect(page.locator('.realm-tile')).toHaveCount(5);
@@ -34,7 +36,7 @@ test('P4: imported CDB/Lua evidence → static analyzer → persistent manual tr
     const report=await page.locator('.audit-coverage').allTextContents();
     const root=await page.locator('.audit-root').allTextContents();
     const studio=await page.locator('.iw-root').allTextContents();
-    throw new Error('P4 audit did not render: '+JSON.stringify({errors,progress,report,root:root.map(s=>s.slice(0,900)),studio:studio.map(s=>s.slice(0,400)),url:page.url()})+' / '+String(e));
+    throw new Error('P4 audit did not render: '+JSON.stringify({errors,progress,report,root:root.map(s=>s.slice(0,900)),studio:studio.map(s=>s.slice(0,400)),url:page.url(),pageErrors})+' / '+String(e));
   }
   await expect(page.locator('.audit-rule').filter({hasText:'COUNT_LIMIT_REVIEW'})).toHaveCount(1);
   await page.getByLabel('LUA_ID_MISMATCH 검토 상태').selectOption('조치 필요');
