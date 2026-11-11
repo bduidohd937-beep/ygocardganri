@@ -1,0 +1,62 @@
+import {expect,test} from '@playwright/test';
+import {readFile} from 'node:fs/promises';
+const ids=Array.from({length:20},(_,i)=>String(91008601+i));
+const ydk=['#created by P5 browser fixture','#main',...ids.flatMap(id=>[id,id]),'#extra','!side',''].join('\n');
+
+test('P5: import 40-card YDK, set role tags, compare probabilities, save and restore deck study',async({page})=>{
+  // Missing CDB names are expected: explicitly approve keeping the original YDK with unresolved IDs.
+  page.on('dialog',dialog=>void dialog.accept());
+  await page.goto('/');
+  await expect(page.locator('.realm-tile')).toHaveCount(5);
+  await page.locator('.sidebar .nav-link').filter({hasText:'테마 라이브러리'}).click();
+  await page.getByRole('button',{name:'새 테마'}).click();
+  await page.getByPlaceholder('예: 코스모코드').fill('P5 코스모코드 연구');
+  await page.getByRole('button',{name:'테마 등록'}).click();
+  await page.locator('.sidebar .nav-link').filter({hasText:'파일 센터'}).click();
+  await page.locator('.fc-file-select select').selectOption({label:'P5 코스모코드 연구'});
+  await page.locator('.fc-drop input[type=file]').setInputFiles([
+    {name:'검증_메인40.ydk',mimeType:'text/plain',buffer:Buffer.from(ydk)},
+  ]);
+  await expect(page.locator('.fc-preview')).toBeVisible({timeout:30000});
+  await page.getByRole('button',{name:/원본 보관 확정/}).click();
+  await expect(page.locator('.fc-file-row')).toHaveCount(1);
+  await page.locator('.sidebar .nav-link').filter({hasText:'덱 연구실'}).click();
+  await expect(page.locator('.decklab-shell')).toBeVisible();
+  await expect(page.locator('.decklab-stats>div').first().locator('strong')).toHaveText('40');
+  await expect(page.locator('.decklab-probability').first()).toContainText('태그 미설정');
+  await page.getByRole('button',{name:'원본에서 새 분석안'}).click();
+  await page.getByLabel('91008601 초동').check({force:true});
+  await page.getByLabel('91008602 전개보조').check({force:true});
+  await page.getByLabel('91008603 말림').check({force:true});
+  await expect(page.locator('.decklab-probability').first()).toContainText('%');
+  await expect(page.locator('.decklab-probability').nth(1)).toContainText('%');
+  await page.getByRole('button',{name:'91008601 1장 늘리기'}).click();
+  await expect(page.locator('.decklab-stats>div').first().locator('strong')).toHaveText('41');
+  await expect(page.locator('.decklab-save-state')).toContainText('저장되지 않은 변경');
+  await page.getByRole('button',{name:'분석안 저장'}).click();
+  await expect(page.locator('.decklab-save-state')).toContainText('저장된 분석안');
+  const downloadPromise=page.waitForEvent('download');
+  await page.getByRole('button',{name:'분석안 YDK 출력'}).click();
+  const download=await downloadPromise;
+  expect(download.suggestedFilename()).toContain('덱연구안_');
+  const saved=await readFile((await download.path())!,'utf8');
+  expect(saved).toContain('#main');
+  expect(saved).toContain('#extra');
+  expect(saved).toContain('!side');
+  expect(saved.split('\n').filter(line=>line==='91008601')).toHaveLength(3);
+  const backupPromise=page.waitForEvent('download');
+  await page.getByRole('button',{name:'연구안 전체 JSON 백업'}).click();
+  const backup=await backupPromise;
+  expect(backup.suggestedFilename()).toContain('덱연구실_분석안_백업');
+  await page.reload();
+  await expect(page.locator('.realm-tile')).toHaveCount(5);
+  await page.locator('.sidebar .nav-link').filter({hasText:'덱 연구실'}).click();
+  await page.getByLabel('저장된 분석안').selectOption({index:1});
+  await expect(page.locator('.decklab-stats>div').first().locator('strong')).toHaveText('41');
+  await expect(page.getByLabel('91008601 초동')).toBeChecked();
+  await expect(page.getByLabel('91008602 전개보조')).toBeChecked();
+  // Uploaded YDK source remains the untouched 40-card deck.
+  await page.locator('.sidebar .nav-link').filter({hasText:'파일 센터'}).click();
+  await page.locator('.fc-file-select select').selectOption({label:'P5 코스모코드 연구'});
+  await expect(page.locator('.fc-index-list')).toContainText('메인 40');
+});
