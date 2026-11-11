@@ -1,4 +1,6 @@
 import type { IndexedDeck } from './fileCatalog';
+import { emptyCombinationPlan, validateCombinationPlan } from './combinationMath';
+import type { CombinationPlan } from './combinationMath';
 
 export type DeckRole = '초동' | '전개보조' | '말림' | '패트랩';
 export const DECK_ROLES:readonly DeckRole[]=['초동','전개보조','말림','패트랩'];
@@ -6,6 +8,8 @@ export type DeckStudy={
   schemaVersion:1;id:string;sourceDeckId:string;themeId:string;name:string;
   main:string[];extra:string[];side:string[];tags:Record<string,DeckRole[]>;
   notes:string;revision:number;createdAt:string;updatedAt:string;
+  /** Optional for backward compatibility with saved P5 studies and backups. */
+  combinations?:CombinationPlan;
 };
 export type DeckStudyBackup={
   kind:'ygo_card_studio_deck_lab';schemaVersion:1;exportedAt:string;studies:DeckStudy[];
@@ -22,7 +26,7 @@ export function newDeckStudy(source:IndexedDeck):DeckStudy {
   return {schemaVersion:1,id:crypto.randomUUID(),sourceDeckId:source.id,
     themeId:source.themeId,name:source.name.replace(/\.ydk$/i,'')+' · 연구안',
     main:[...source.main],extra:[...source.extra],side:[...source.side],tags:{},
-    notes:'',revision:0,createdAt:now,updatedAt:now};
+    notes:'',revision:0,createdAt:now,updatedAt:now,combinations:emptyCombinationPlan()};
 }
 export function validateDeckStudy(raw:unknown):raw is DeckStudy{
   if(!raw||typeof raw!=='object')return false;
@@ -35,6 +39,7 @@ export function validateDeckStudy(raw:unknown):raw is DeckStudy{
   if(!Array.isArray(s.main)||!Array.isArray(s.extra)||!Array.isArray(s.side)||
     s.main.length>300||s.extra.length>30||s.side.length>30)return false;
   if(![...s.main,...s.extra,...s.side].every(id=>typeof id==='string'&&validId(id)))return false;
+  if(s.combinations!==undefined&&!validateCombinationPlan(s.combinations))return false;
   if(!s.tags||typeof s.tags!=='object'||Array.isArray(s.tags)||Object.keys(s.tags).length>500)return false;
   return Object.entries(s.tags).every(([id,roles])=>validId(id)&&Array.isArray(roles)&&roles.length<=4&&
     new Set(roles).size===roles.length&&roles.every(r=>DECK_ROLES.includes(r)));

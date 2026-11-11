@@ -1,0 +1,48 @@
+.combo-shell{border:1px solid #3a4350;background:#141a21;padding:22px;display:grid;gap:16px;color:#e9e4df}
+.combo-head{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid #3a444d;padding-bottom:16px}
+.combo-head svg{color:#ba8b83;flex:0 0 auto}
+.combo-head h3{font:500 22px 'Noto Serif KR',Georgia,serif;margin:8px 0;color:#eee9e4}
+.combo-head p{margin:0;color:#b0bac3;font-size:12px;line-height:1.8}
+.combo-head strong{color:#e3c1b5}
+.combo-add{display:flex;gap:12px;flex-wrap:wrap;align-items:end}
+.combo-add>label,.combo-route label,.combo-risk label{display:flex;flex-direction:column;gap:7px;color:#b6bfc8;font-size:11px;min-width:0}
+.combo-add>label{flex:1 1 210px}
+.combo-add select,.combo-route input,.combo-risk input{width:100%;min-width:0;min-height:40px;background:#111820;border:1px solid #434c57;border-radius:3px;color:#f1ebe3;padding:9px 11px}
+.combo-add span{font:11px 'DM Mono',monospace;color:#a0aeba;align-self:center}
+.combo-add button,.combo-route button,.combo-risk button{display:inline-flex;gap:6px;align-items:center}
+.combo-route-list{display:grid;gap:12px}
+.combo-empty,.combo-pending{padding:22px;text-align:center;color:#a2b0bd;background:#191f27;border:1px dashed #424d58;font-size:12px;line-height:1.7}
+.combo-route{border:1px solid #384451;background:#1a222b;padding:16px;display:grid;gap:13px}
+.combo-route-heading{display:flex;justify-content:space-between;align-items:end;gap:12px}
+.combo-route-heading label{flex:1}
+.combo-route-fields{display:grid;grid-template-columns:minmax(120px,1fr) auto minmax(120px,1fr) auto;gap:12px;align-items:center}
+.combo-route-fields small{color:#8f9fad;font-size:10px;line-height:1.4;overflow-wrap:anywhere}
+.combo-and{font:11px 'DM Mono',monospace;color:#b7a19e;padding-top:14px}
+.combo-guide{font-size:11px;color:#9cabb9;line-height:1.65;margin:0}
+.combo-guide strong{color:#dab1a4}
+.combo-risk{display:grid;gap:12px;padding:17px;border:1px solid #3a4750;background:#1a2028}
+.combo-risk strong{font-size:13px;color:#e5e1db}
+.combo-risk p{color:#a8b4c0;font-size:11px;line-height:1.6;margin:6px 0 0}
+.combo-risk small{font-size:10px;color:#9eacba}
+.combo-risk-actions{display:flex;gap:8px;flex-wrap:wrap}
+.combo-error{color:#f0a5a1;font-size:12px;line-height:1.5;margin:0}
+.combo-unknown{display:flex;gap:9px;align-items:start;border:1px solid #746045;background:#29221b;padding:12px;font-size:11px;color:#ddc3a0;line-height:1.65}
+.combo-unknown svg{flex:0 0 auto}
+.combo-metrics{display:grid;gap:15px}
+.combo-result-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.combo-result{border:1px solid #38434f;background:#181f28;padding:17px;display:grid;gap:8px}
+.combo-result>span{color:#afb9c4;font-size:11px}
+.combo-result strong{font-size:26px;font-weight:500;color:#f4e8de;font-variant-numeric:tabular-nums}
+.combo-meter{height:5px;background:#36404b;border-radius:4px;overflow:hidden}
+.combo-meter i{display:block;background:#a96860;height:100%}
+.combo-result small{font-size:10px;color:#9eafbc;line-height:1.5}
+.combo-per-route{display:grid;gap:4px;border:1px solid #34404a;padding:14px}
+.combo-per-route>strong{font-size:12px;font-weight:500;color:#c7d2d9;padding-bottom:9px}
+.combo-per-route>div{display:grid;grid-template-columns:minmax(100px,1fr) 80px minmax(150px,1fr);gap:12px;padding:9px 0;border-top:1px solid #303b46;align-items:center;font-size:12px}
+.combo-per-route>div>strong{color:#f1d8cb;font-size:14px;font-weight:500;font-variant-numeric:tabular-nums}
+.combo-per-route small{color:#91a5b5;font-size:10px}
+.combo-foot{display:flex;gap:10px;color:#9eacb8;font-size:11px;line-height:1.7;margin:0}
+.combo-foot svg{flex:0 0 auto;color:#ba9477}
+@media(max-width:900px){.combo-route-fields{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}.combo-route-fields>button{grid-column:1/-1;justify-content:center}}
+@media(max-width:680px){.combo-shell{padding:14px}.combo-route-fields{grid-template-columns:1fr}.combo-and{padding:0;text-align:center}.combo-route-fields>button{grid-column:1}.combo-result-grid{grid-template-columns:1fr}.combo-per-route>div{grid-template-columns:1fr auto}.combo-per-route small{grid-column:1/-1}}
+@media(prefers-reduced-motion:reduce){.combo-meter i{transition:none}}
