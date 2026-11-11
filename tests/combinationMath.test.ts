@@ -40,16 +40,16 @@ function exhaustive(deck:string[],settings:CombinationPlan,hand:5|6){
 
 describe('P5.1 exact combination probabilities',()=>{
   it('requires two physically distinct cards for A+B, even with overlapping IDs',()=>{
-    const deck=['91000001',...cards(39).filter(x=>x!=='91000001')].slice(0,40);
+    const deck=['91000001',...Array.from({length:39},(_,i)=>String(92000001+i))];
     const p=plan([route('same',['91000001'],['91000001'])]);
     expect(combinationMetrics(deck,p,5).anyRoute).toBe(0);
-    const duplicated=['91000001','91000001',...cards(38).filter(x=>x!=='91000001')];
+    const duplicated=['91000001','91000001',...Array.from({length:38},(_,i)=>String(92000001+i))];
     const result=combinationMetrics(duplicated,p,5);
     const probability=choose(38,3)/choose(40,5);
     expect(result.anyRoute).toBeCloseTo(probability,12);
   });
   it('A+B disjoint uses the hypergeometric intersection and works for 5/6 cards',()=>{
-    const deck=[...Array(3).fill('91000001'),...Array(2).fill('91000002'),...cards(35)];
+    const deck=[...Array(3).fill('91000001'),...Array(2).fill('91000002'),...Array.from({length:35},(_,i)=>String(92000001+i))];
     const p=plan([route('AB',['91000001'],['91000002'])]);
     for(const hand of [5,6] as const){
       const result=combinationMetrics(deck,p,hand);
@@ -58,7 +58,7 @@ describe('P5.1 exact combination probabilities',()=>{
     }
   });
   it('two identical OR routes are counted exactly once',()=>{
-    const deck=[...Array(3).fill('91000001'),...cards(37)];
+    const deck=[...Array(3).fill('91000001'),...Array.from({length:37},(_,i)=>String(92000001+i))];
     const settings=plan([route('first',['91000001']),route('second',['91000001'])]);
     const result=combinationMetrics(deck,emptyCombinationPlan(),5);
     const again=combinationMetrics(deck,settings,5);
@@ -68,7 +68,7 @@ describe('P5.1 exact combination probabilities',()=>{
     expect(result.canCalculate).toBe(false);
   });
   it('A-only or B-only route is the probability of either group appearing',()=>{
-    const deck=[...Array(2).fill('91000001'),...Array(2).fill('91000002'),...cards(36)];
+    const deck=[...Array(2).fill('91000001'),...Array(2).fill('91000002'),...Array.from({length:36},(_,i)=>String(92000001+i))];
     const result=combinationMetrics(deck,plan([route('A',['91000001']),route('B',['91000002'])]),5);
     const expected=1-choose(36,5)/choose(40,5);
     expect(result.anyRoute).toBeCloseTo(expected,12);
@@ -114,7 +114,7 @@ describe('P5.1 exact combination probabilities',()=>{
   });
   it('handles 60-card maximum and all four routes without exhaustive hand enumeration',()=>{
     const deck=[...Array(3).fill('91000001'),...Array(3).fill('91000002'),
-      ...Array(3).fill('91000003'),...Array(3).fill('91000004'),...cards(48)];
+      ...Array(3).fill('91000003'),...Array(3).fill('91000004'),...Array.from({length:48},(_,i)=>String(92000001+i))];
     const settings=plan([
       route('p1',['91000001'],['91000002']),
       route('p2',['91000003'],['91000004']),
