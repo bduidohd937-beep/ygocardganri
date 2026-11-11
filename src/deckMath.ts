@@ -98,7 +98,7 @@ export function openingMetrics(study:Pick<DeckStudy,'main'|'tags'>,hand:5|6){
   const pNoStarterOrExtender=chooseNone(total,union('초동','전개보조'),hand);
   const pNoStarterOrBrick=chooseNone(total,union('초동','말림'),hand);
   // P(X=1) = K * C(N-K,h-1) / C(N,h) = (K*h/N)*C(N-K,h-1)/C(N-1,h-1)
-  const pOneBrick=brick===0?0:(brick*hand/total)*chooseNone(total-1,brick,hand-1);
+  const pOneBrick=brick===0?0:(brick*hand/total)*chooseNone(total-1,brick-1,hand-1);
   const clamp=(x:number)=>Math.min(1,Math.max(0,x));
   return {total,hand,starter,extender,brick,handTrap,canCalculate:true,
     atLeastStarter:clamp(1-pNoStarter),
