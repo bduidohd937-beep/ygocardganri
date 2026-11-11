@@ -36,7 +36,8 @@ test('P4: imported CDB/Lua evidence → static analyzer → persistent manual tr
     const report=await page.locator('.audit-coverage').allTextContents();
     const root=await page.locator('.audit-root').allTextContents();
     const studio=await page.locator('.iw-root').allTextContents();
-    throw new Error('P4 audit did not render: '+JSON.stringify({errors,progress,report,root:root.map(s=>s.slice(0,900)),studio:studio.map(s=>s.slice(0,400)),url:page.url(),pageErrors})+' / '+String(e));
+    const body=(await page.locator('body').innerText()).slice(0,1200);
+    throw new Error('P4 audit did not render: '+JSON.stringify({errors,progress,report,root:root.map(s=>s.slice(0,900)),studio:studio.map(s=>s.slice(0,400)),url:page.url(),pageErrors,body})+' / '+String(e));
   }
   await expect(page.locator('.audit-rule').filter({hasText:'COUNT_LIMIT_REVIEW'})).toHaveCount(1);
   await page.getByLabel('LUA_ID_MISMATCH 검토 상태').selectOption('조치 필요');
