@@ -8,7 +8,7 @@ export type AuditFinding = {
   themeId: string; passcode: string; title: string; evidence: string;
   source: string; line: number | null; suggestion: string;
 };
-export type LuaAuditSource = { assetId: string; filename: string; hash: string; content: string; truncated: boolean };
+export type LuaAuditSource = { assetId: string; filename: string; hash: string; content: string; truncated: boolean; unavailable?: boolean };
 export type AuditInput = { card: LinkedCard; approvedEffect: string; lua: LuaAuditSource[] };
 export type AuditReport = { createdAt: string; engine: 'P4-static-v1'; scope: '카드' | '테마'; themeId: string;
   totalCards: number; scannedCards: number; truncated: boolean; findings: AuditFinding[] };
@@ -75,6 +75,12 @@ export function analyzeCard(input: AuditInput): AuditFinding[] {
   const specialSummon = /특수\s*소환/.test(text);
 
   for (const src of lua) {
+    if (src.unavailable) {
+      add('LUA_ORIGINAL_UNAVAILABLE', '주의', '자료 확인', '보관된 Lua 원본을 불러올 수 없음',
+        `${src.filename}: 파일 색인은 있지만 이 브라우저에서 원본을 읽지 못했습니다.`,
+        '파일 센터에서 원본 다운로드와 저장 상태를 확인하고 필요하다면 다시 가져오세요.', `Lua:${src.assetId}`, null, src.hash);
+      continue;
+    }
     if (src.truncated) {
       add('LUA_TRUNCATED', '검토', '자료 확인', 'Lua 분석 범위 제한',
         `${src.filename}은 최대 분석 크기를 초과하여 앞부분만 검사했습니다. 아래의 부재 검사는 생략됩니다.`,
