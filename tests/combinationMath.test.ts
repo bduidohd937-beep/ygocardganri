@@ -127,6 +127,7 @@ describe('P5.1 exact combination probabilities',()=>{
     expect(outcome.anyRoute).toBeGreaterThan(0);
     expect(outcome.anyRoute).toBeLessThanOrEqual(1);
     expect(outcome.noRoute!+outcome.anyRoute!).toBeCloseTo(1,12);
+    expect(combinationMetrics([...deck,'93000001'],settings,6).canCalculate).toBe(false);
     expect(performance.now()-started).toBeLessThan(3000);
   });
 });
