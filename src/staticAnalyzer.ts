@@ -11,8 +11,9 @@ export type AuditFinding = {
 };
 export type LuaAuditSource = { assetId: string; filename: string; hash: string; content: string; truncated: boolean; unavailable?: boolean };
 export type AuditInput = { card: LinkedCard; approvedEffect: string; lua: LuaAuditSource[] };
-export type AuditReport = { createdAt: string; engine: 'P4-static-v1' | 'P4.1-ast-v1'; scope: '카드' | '테마'; themeId: string;
-  totalCards: number; scannedCards: number; truncated: boolean; findings: AuditFinding[] };
+export type AuditReport = { createdAt: string; engine: 'P4-static-v1' | 'P4.1-ast-v1' | 'P4.2-alignment-v1'; scope: '카드' | '테마'; themeId: string;
+  totalCards: number; scannedCards: number; truncated: boolean; findings: AuditFinding[];
+  comparisons?: import('./effectAlignment').EffectAlignment[] };
 
 /** Not cryptographic; only for stable presentation of revision-dependent finding keys. */
 function shortFingerprint(text: string): string {
