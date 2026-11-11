@@ -63,9 +63,8 @@ export function setMainCopies(study:DeckStudy,id:string,count:number):DeckStudy{
   if(study.main.length-current+count>60)throw new Error('메인 덱 60장을 초과합니다.');
   const main=study.main.filter(x=>x!==id);
   for(let i=0;i<count;i++)main.push(id);
-  const tags={...study.tags};
-  if(count===0)delete tags[id];
-  return {...study,main,tags};
+  // Keep the role label after removal so original-YDK comparisons remain on equal assumptions.
+  return {...study,main,tags:{...study.tags}};
 }
 export function deckWarnings(study:Pick<DeckStudy,'main'|'extra'|'side'>):string[]{
   const result:string[]=[];
