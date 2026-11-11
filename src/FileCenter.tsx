@@ -4,8 +4,9 @@ import { AlertTriangle, Check, ChevronDown, Database, Download, FileArchive, Fil
 import { createTheme, emptyFileCatalog, findAssetConflicts, NOCTURNA_ID } from './fileCatalog';
 import type { FileCatalog, PreviewBatch, AssetEntry } from './fileCatalog';
 import { commitImport, getOriginal, loadCatalog, saveCatalog } from './fileVault';
+import { collectLinkedCards } from './importedWorkbench';
 
-type Props = { view: 'themes'|'files' };
+type Props = { view: 'themes'|'files'|'cards'; onOpenCard?:(themeId:string,passcode:string)=>void; externalSearch?:string };
 type Progress = { completed: number; total: number; filename: string };
 type Response =
   | { type:'progress'; completed:number; total:number; filename:string }
@@ -15,7 +16,7 @@ const KINDS = ['전체','CDB','Lua','이미지','YDK','ZIP'] as const;
 const shortHash=(hash:string)=>hash.slice(0,12);
 const fmt=(n:number)=>n>1024*1024?`${(n/1024/1024).toFixed(2)} MB`:`${(n/1024).toFixed(1)} KB`;
 
-export default function FileCenter({view}:Props){
+export default function FileCenter({view,onOpenCard,externalSearch=''}:Props){
   const [catalog,setCatalog]=useState<FileCatalog>(emptyFileCatalog);
   const [ready,setReady]=useState(false);
   const [error,setError]=useState('');
@@ -30,6 +31,8 @@ export default function FileCenter({view}:Props){
   const [notice,setNotice]=useState('');
   const [filter,setFilter]=useState<typeof KINDS[number]>('전체');
   const [query,setQuery]=useState('');
+  const [cardThemeFilter,setCardThemeFilter]=useState('all');
+  const [cardLimit,setCardLimit]=useState(60);
   const fileInput=useRef<HTMLInputElement|null>(null);
   const worker=useRef<Worker|null>(null);
   const mounted=useRef(true);
@@ -43,6 +46,15 @@ export default function FileCenter({view}:Props){
   const listed=useMemo(()=>catalog.assets.filter(a=>a.themeId===selectedTheme && (filter==='전체'||a.kind===filter) && `${a.filename} ${a.cardId||''}`.toLowerCase().includes(query.toLowerCase())).slice().reverse().slice(0,200),[catalog.assets,selectedTheme,filter,query]);
   const cards=useMemo(()=>catalog.cards.filter(x=>x.themeId===selectedTheme),[catalog.cards,selectedTheme]);
   const decks=useMemo(()=>catalog.decks.filter(x=>x.themeId===selectedTheme),[catalog.decks,selectedTheme]);
+  const linked=useMemo(()=>collectLinkedCards(catalog),[catalog]);
+  const importedCards=useMemo(()=>{
+    const words=(externalSearch+' '+query).toLocaleLowerCase().trim().split(/\s+/).filter(Boolean);
+    const themeNames=new Map(catalog.themes.map(t=>[t.id,t.name.toLocaleLowerCase()]));
+    return linked.filter(c=>(cardThemeFilter==='all'||c.themeId===cardThemeFilter)&&words.every(word=>
+      `${c.passcode} ${c.name} ${themeNames.get(c.themeId)||''}`.toLocaleLowerCase().includes(word)));
+  },[linked,catalog.themes,cardThemeFilter,externalSearch,query]);
+  const themeCards=useMemo(()=>linked.filter(c=>c.themeId===selectedTheme),[linked,selectedTheme]);
+  useEffect(()=>setCardLimit(60),[cardThemeFilter,query,externalSearch]);
   const conflicts=useMemo(()=>preview?findAssetConflicts(catalog,selectedTheme,preview.entries):[],[preview,catalog,selectedTheme]);
   const ambiguities=useMemo(()=>{
     if(!preview)return [];
@@ -108,7 +120,15 @@ export default function FileCenter({view}:Props){
       <div className="fc-section-heading"><div><span className="micro-label">ALL CUSTOM PROJECTS</span><h2>테마 라이브러리</h2><p>《녹투르나》 이외의 테마도 독립적으로 등록하고 파일을 관리합니다.</p></div><button className="primary-button" onClick={()=>setAdding(v=>!v)}><Plus size={16}/> 새 테마</button></div>
       {adding&&<form className="fc-theme-form" onSubmit={e=>{e.preventDefault();void create();}}><label>테마명<input required maxLength={100} placeholder="예: 코스모코드" value={newTheme} onChange={e=>setNewTheme(e.target.value)}/></label><label>설명 (선택)<input maxLength={500} placeholder="설계 메모 또는 카드군 설명" value={newDescription} onChange={e=>setNewDescription(e.target.value)}/></label><button className="primary-button" type="submit">테마 등록</button><button className="outline-button" type="button" onClick={()=>setAdding(false)}>취소</button></form>}
       <div className="fc-theme-grid">{themes.map((t,index)=><button key={t.id} className={`fc-theme-card ${selectedTheme===t.id?'fc-theme-card--active':''}`} onClick={()=>setSelectedTheme(t.id)}><span className="micro-label">THEME / {String(index+1).padStart(2,'0')}</span><strong>{t.name}</strong><span>{t.description||'설명 미확인'}</span><small>등록 파일 {catalog.assets.filter(a=>a.themeId===t.id).length}개 · CDB 카드 {catalog.cards.filter(c=>c.themeId===t.id).length}건</small></button>)}</div>
-      <p className="fc-footnote">《녹투르나》의 카드 설계 문서는 기존 카드 작업실에 유지돼. 신규 테마는 현재 파일·카드 ID 목록 관리부터 지원하며, 모든 테마의 효과 편집 통합은 다음 단계야.</p>
+      <div className="fc-subheading"><div><span className="micro-label">CARD WORKBENCH / THEME</span><h3>{activeTheme?.name||'선택된 테마'} · 연결 카드</h3></div></div>
+      {!themeCards.length?<p className="fc-footnote">이 테마에 연결된 CDB·Lua·이미지 카드 ID가 없어. 파일 센터에서 파일을 등록해.</p>:<div className="fc-workbench-list">{themeCards.slice(0,30).map(c=><button key={c.passcode} onClick={()=>onOpenCard?.(c.themeId,c.passcode)} disabled={!onOpenCard}><strong>{c.name==='미확인'?`ID ${c.passcode}`:c.name}</strong><span>{c.passcode} · CDB {c.sourceCards.length}건 · 파일 {c.files.length}개 {c.conflictingSources?'· 원문 충돌':''}</span><ChevronDown size={15}/></button>)}</div>}
+      <p className="fc-footnote">기존 《녹투르나》 아벨은 기존 작업실에, 업로드 카드 ID는 통합 작업실에 각각 보존돼. 이름/효과 원문은 승인 전까지 섞이지 않아.</p>
+    </> : view==='cards' ? <>
+      <div className="fc-section-heading"><div><span className="micro-label">P3 / CARD CONNECTIONS</span><h2>외부 테마 · 파일 연결 카드</h2><p>CDB·Lua·이미지에 연결된 모든 테마의 카드를 선택해 효과를 설계하고 검수할 수 있어.</p></div></div>
+      <div className="fc-file-select"><label>테마<select value={cardThemeFilter} onChange={e=>setCardThemeFilter(e.target.value)}><option value="all">전체 테마</option>{themes.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></label><label>파일 ID·CDB 이름 조회<input value={query} onChange={e=>setQuery(e.target.value)} placeholder="이름 또는 카드 ID"/></label><span>검색 결과 {importedCards.length.toLocaleString('ko-KR')}종</span></div>
+      {importedCards.length===0?<div className="fc-empty"><FileArchive size={26}/><strong>연결된 카드 파일이 없어.</strong><p>파일 센터에서 CDB, Lua 또는 이미지 원본을 등록해.</p></div>:<div className="fc-workbench-list">{importedCards.slice(0,cardLimit).map(c=><button key={`${c.themeId}:${c.passcode}`} onClick={()=>onOpenCard?.(c.themeId,c.passcode)} disabled={!onOpenCard}><strong>{c.name==='미확인'?`카드명 미확인 · ${c.passcode}`:c.name}</strong><span>{themes.find(t=>t.id===c.themeId)?.name||'미확인 테마'} / ID {c.passcode} / CDB {c.sourceCards.length} / 파일 {c.files.length}{c.conflictingSources?' · CDB 충돌 검토':''}</span><ChevronDown size={15}/></button>)}</div>}
+      {cardLimit<importedCards.length&&<button className="outline-button" onClick={()=>setCardLimit(n=>n+60)}>다음 카드 60종 보기 ({cardLimit}/{importedCards.length})</button>}
+      <p className="fc-footnote">CDB 원문은 출처 자료야. 승인 전에는 확정 효과나 기존 《녹투르나》 설계 문서를 변경하지 않아.</p>
     </> : <>
       <div className="fc-section-heading"><div><span className="micro-label">P2 / SAFE ASSET VAULT</span><h2>파일 센터</h2><p>원본을 보존하며 CDB·Lua·이미지·YDK·ZIP을 분석합니다. 자동 승인은 하지 않습니다.</p></div><span className="fc-mode">현재 브라우저 보관 · IndexedDB</span></div>
       <div className="fc-file-select"><label>파일을 보관할 테마 <select value={selectedTheme} onChange={e=>{setSelectedTheme(e.target.value);setPreview(null);}}>{themes.map(t=><option value={t.id} key={t.id}>{t.name}</option>)}</select></label><span>다른 카드군을 추가하려면 먼저 ‘테마 라이브러리’에서 새 테마를 등록하세요.</span></div>
@@ -133,7 +153,8 @@ export default function FileCenter({view}:Props){
       <div className="fc-subheading"><div><span className="micro-label">INDEXED ORIGINALS / {activeTheme?.name||''}</span><h3>보관된 파일</h3></div><div className="fc-filter"><Search size={15}/><input placeholder="파일명·카드 ID" value={query} onChange={e=>setQuery(e.target.value)}/><select aria-label="파일 종류" value={filter} onChange={e=>setFilter(e.target.value as typeof KINDS[number])}>{KINDS.map(k=><option key={k}>{k}</option>)}</select><ChevronDown size={13}/></div></div>
       {!listed.length?<div className="fc-empty"><FileArchive size={26}/><strong>아직 보관된 원본 파일이 없습니다.</strong><p>테마를 선택한 뒤 파일을 업로드하면 목록에 나타납니다.</p></div>:<div className="fc-file-list">{listed.map(a=><div className="fc-file-row" key={a.id}><div className="fc-file-icon">{a.kind==='CDB'?<Database size={20}/>:a.kind==='Lua'?<FileCode2 size={20}/>:a.kind==='이미지'?<FileImage size={20}/>:a.kind==='ZIP'?<FileArchive size={20}/>:<FileText size={20}/>}</div><div className="fc-file-meta"><strong>{a.filename}</strong><small>{a.kind} · {a.cardId||'다중/미확인'} · {fmt(a.size)} · SHA256 {shortHash(a.sha256)}…</small>{a.notes.length>0&&<em>{a.notes.join(' · ')}</em>}</div><button className="outline-button" onClick={()=>void download(a)} title="브라우저에 보관된 원본을 내려받습니다"><Download size={14}/> 원본</button></div>)}</div>}
       {catalog.assets.filter(a=>a.themeId===selectedTheme).length>200&&<p className="fc-footnote">성능 보호를 위해 최대 200개 파일만 목록에 표시해. 검색 조건으로 좁혀 봐.</p>}
-      {cards.length>0&&<><div className="fc-subheading"><div><span className="micro-label">IMPORTED CARD INDEX · NOT APPROVED</span><h3>CDB 카드 인덱스 · {cards.length}개 추출</h3></div></div><div className="fc-index-list">{cards.slice(-30).reverse().map((c,i)=><div key={`${c.sourceId}-${i}`}><code>{c.passcode}</code><strong>{c.name||'카드명 미확인'}</strong><span>{c.effectText?'원문 추출됨 / 미승인':'효과 미확인'}</span></div>)}</div>{cards.length>30&&<p className="fc-footnote">가장 최근 30개만 표시. 전체 카드 등록·편집은 다음 단계에서 연결해.</p>}</>}
+      {cards.length>0&&<><div className="fc-subheading"><div><span className="micro-label">IMPORTED CARD INDEX · NOT APPROVED</span><h3>CDB 카드 인덱스 · {cards.length}개 추출</h3></div></div><div className="fc-index-list">{cards.slice(-30).reverse().map((c,i)=><button className="fc-open-index" key={`${c.sourceId}-${i}`} onClick={()=>onOpenCard?.(c.themeId,c.passcode)} disabled={!onOpenCard}><code>{c.passcode}</code><strong>{c.name||'카드명 미확인'}</strong><span>{c.effectText?'원문 추출됨 / 미승인':'효과 미확인'} · 작업실 열기</span></button>)}</div>{cards.length>30&&<p className="fc-footnote">가장 최근 30개만 표시. 전체 인덱스는 카드 라이브러리에서 열어.</p>}</>}
+      {themeCards.some(c=>!c.sourceCards.length)&&<><div className="fc-subheading"><div><span className="micro-label">LUA / IMAGE ONLY</span><h3>CDB 없이 파일로만 확인된 카드 ID</h3></div></div><div className="fc-workbench-list">{themeCards.filter(c=>!c.sourceCards.length).slice(0,30).map(c=><button key={c.passcode} onClick={()=>onOpenCard?.(c.themeId,c.passcode)} disabled={!onOpenCard}><strong>카드 ID {c.passcode}</strong><span>이름·효과 미확인 · 파일 {c.files.length}개 · 작업실 열기</span><ChevronDown size={15}/></button>)}</div></>}
       {decks.length>0&&<><div className="fc-subheading"><div><span className="micro-label">YDK RECIPE INDEX</span><h3>덱 파일</h3></div></div><div className="fc-index-list">{decks.slice(-15).reverse().map(d=><div key={d.id}><strong>{d.name}</strong><span>메인 {d.main.length} / 엑스트라 {d.extra.length} / 사이드 {d.side.length}</span></div>)}</div></>}
       <p className="fc-footnote"><AlertTriangle size={14}/> JSON 카드 백업에는 업로드한 바이너리 원본이 포함되지 않아. 원본 파일은 이 브라우저의 IndexedDB에만 존재하므로 기기·브라우저 데이터를 삭제하기 전에 원본을 따로 보관해야 해. 업로드만으로 OCG·Lua·EDOPro 검증 완료가 되지 않아.</p>
     </>}
