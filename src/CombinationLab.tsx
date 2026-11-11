@@ -1,7 +1,7 @@
-import { useMemo,useState } from 'react';
+import { useEffect,useMemo,useState } from 'react';
 import { AlertTriangle, GitMerge, Plus, Save, Trash2 } from 'lucide-react';
 import { combinationMetrics, emptyCombinationPlan, MAX_COMBO_ROUTES, parseIdList } from './combinationMath';
-import type { CombinationPlan, CombinationRoute } from './combinationMath';
+import type { CombinationPlan, CombinationRoute, CombinationMetrics } from './combinationMath';
 import type { DeckStudy } from './deckMath';
 import './combination-lab.css';
 
@@ -28,11 +28,19 @@ function RouteEditor({route,onSave,onDelete,cardNames}:{route:CombinationRoute;o
   const [title,setTitle]=useState(route.label);
   const [a,setA]=useState(route.a.join(', '));
   const [b,setB]=useState(route.b.join(', '));
+  const [forbidden,setForbidden]=useState((route.forbiddenIds||[]).join(', '));
+  const [resources,setResources]=useState((route.resourceIds||[]).join(', '));
+  const [minimum,setMinimum]=useState(route.minResources||0);
   const [error,setError]=useState('');
   const apply=()=>{
     try{
       const nextA=parseIdList(a),nextB=parseIdList(b,true);
-      onSave({...route,label:title.trim().slice(0,100)||'이름 없는 초동 루트',a:nextA,b:nextB});
+      const nextForbidden=parseIdList(forbidden,true),nextResources=parseIdList(resources,true);
+      if(minimum>0&&!nextResources.length)throw new Error('추가 자원 매수를 설정했다면 자원 카드 ID도 지정하세요.');
+      if(minimum>0&&nextResources.some(id=>nextA.includes(id)||nextB.includes(id)))
+        throw new Error('추가 자원은 A/B 초동 카드와 다른 ID여야 해. 동일 카드를 두 번 세지 않도록 자원 그룹을 분리하세요.');
+      onSave({...route,label:title.trim().slice(0,100)||'이름 없는 초동 루트',
+        a:nextA,b:nextB,forbiddenIds:nextForbidden,resourceIds:nextResources,minResources:minimum});
       setError('');
     }catch(e){setError(e instanceof Error?e.message:'입력 오류');}
   };
@@ -50,8 +58,26 @@ function RouteEditor({route,onSave,onDelete,cardNames}:{route:CombinationRoute;o
         placeholder="비워 두면 A 단독 초동"/><small>{nameOf(route.b)}</small></label>
       <button type="button" className="primary-button" onClick={apply} aria-label={route.id+' 조건 적용'}><Save size={14}/> 조건 적용</button>
     </div>
+    <div className="combo-constraints">
+      <label>금지 패 카드 · 있으면 이 루트 실패
+        <input aria-label={route.id+' 금지 패 그룹'} value={forbidden} onChange={e=>setForbidden(e.target.value)}
+          placeholder="없어야 할 카드 ID · 쉼표 구분"/>
+      </label>
+      <label>추가 자원 카드 · A/B와 다른 ID
+        <input aria-label={route.id+' 추가 자원 그룹'} value={resources} onChange={e=>setResources(e.target.value)}
+          placeholder="패 코스트 등으로 필요한 카드 ID"/>
+      </label>
+      <label>필요한 추가 자원 실물 매수
+        <select aria-label={route.id+' 추가 자원 최소 매수'} value={minimum}
+          onChange={e=>setMinimum(Number(e.target.value))}>
+          <option value={0}>없음</option><option value={1}>1장 이상</option>
+          <option value={2}>2장 이상</option><option value={3}>3장 이상</option>
+        </select>
+      </label>
+    </div>
     {error&&<p className="combo-error" role="alert">{error}</p>}
-    <p className="combo-guide">A 그룹 안에서는 ID 중 하나만 잡혀도 충족. B를 지정하면 <strong>서로 다른 실제 카드 2장</strong>이 필요해. A/B가 동일 ID여도 복수 매수가 있어야 해.</p>
+    <p className="combo-guide">A+B는 서로 다른 실물 2장, 추가 자원은 A/B와 겹치지 않는 ID의 실물 카드로 별도 충족해야 해.
+    금지 그룹의 카드가 1장이라도 패에 있으면 해당 루트는 실패야. <strong>수정 후 ‘조건 적용’</strong>을 눌러야 확률에 반영돼.</p>
   </div>;
 }
 function Ratio({title,value,baseline,helper}:{title:string;value:number|null;baseline:number|null;helper:string}){
@@ -65,8 +91,35 @@ export default function CombinationLab({study,sourceMain,hand,cardNames,onChange
   const [choice,setChoice]=useState('');
   const [riskRaw,setRiskRaw]=useState(plan.brickIds.join(', '));
   const [riskError,setRiskError]=useState('');
-  const metrics=useMemo(()=>combinationMetrics(study.main,plan,hand),[study.main,plan,hand]);
-  const original=useMemo(()=>combinationMetrics(sourceMain,plan,hand),[sourceMain,plan,hand]);
+  const advanced=plan.routes.some(r=>(r.forbiddenIds?.length||0)>0||(r.minResources||0)>0);
+  const key=JSON.stringify([study.main,sourceMain,plan,hand]);
+  const [computed,setComputed]=useState<{
+    key:string;current:CombinationMetrics;original:CombinationMetrics;
+  }|null>(null);
+  const [calcError,setCalcError]=useState('');
+  const fast=useMemo(()=>advanced?null:{
+    current:combinationMetrics(study.main,plan,hand),
+    original:combinationMetrics(sourceMain,plan,hand),
+  },[advanced,study.main,sourceMain,plan,hand]);
+  useEffect(()=>{
+    if(!advanced)return;
+    const worker=new Worker(new URL('./combinationWorker.ts',import.meta.url),{type:'module'});
+    worker.onmessage=(event:MessageEvent<{
+      current?:CombinationMetrics;original?:CombinationMetrics;error?:string;
+    }>)=>{
+      if(event.data.error||!event.data.current||!event.data.original){
+        setCalcError(event.data.error||'조합 계산 실패');return;
+      }
+      setCalcError('');
+      setComputed({key,current:event.data.current,original:event.data.original});
+    };
+    worker.onerror=()=>setCalcError('분리된 계산 스레드를 실행할 수 없습니다.');
+    worker.postMessage({main:study.main,sourceMain,plan,hand});
+    return()=>worker.terminate();
+  },[advanced,key,study.main,sourceMain,plan,hand]);
+  const result=advanced?(computed?.key===key?computed:null):fast;
+  const metrics=result?.current;
+  const original=result?.original;
   const options=useMemo(()=>distinct(study.main),[study.main]);
   const addRoute=()=>{
     if(!choice||plan.routes.length>=MAX_COMBO_ROUTES)return;
@@ -86,11 +139,11 @@ export default function CombinationLab({study,sourceMain,hand,cardNames,onChange
     const ids=distinct(study.main.filter(id=>(study.tags[id]||[]).includes('말림'))).slice(0,20);
     setRiskRaw(ids.join(', '));onChange({...plan,brickIds:ids});setRiskError('');
   };
-  const unknown=distinct([...plan.routes.flatMap(r=>[...r.a,...r.b]),...plan.brickIds]).filter(id=>!study.main.includes(id));
+  const unknown=distinct([...plan.routes.flatMap(r=>[...r.a,...r.b,...(r.forbiddenIds||[]),...(r.resourceIds||[])]),...plan.brickIds]).filter(id=>!study.main.includes(id));
   const named=(id:string)=>cardNames.get(id)?cardNames.get(id)+' ('+id+')':id;
   return <section className="combo-shell" aria-label="조합 초동 분석기">
-    <div className="combo-head"><div><span className="micro-label">P5.1 / COMBINATIONAL OPENING</span><h3>조합 초동 분석기</h3>
-      <p>한 루트는 A 단독 또는 A+B. 여러 루트는 <strong>OR</strong>로 합쳐 정확히 계산해. 각 루트가 동시에 성립해도 한 번만 세.</p></div>
+    <div className="combo-head"><div><span className="micro-label">P5.2 / CONDITIONAL COMBINATIONS</span><h3>조합 초동 분석기</h3>
+      <p>한 루트는 A 또는 A+B에 금지 패·추가 자원 조건을 더할 수 있어. 여러 루트는 <strong>OR</strong>로 정확하게 합쳐 중복 패를 한 번만 세.</p></div>
       <GitMerge size={22}/></div>
     <div className="combo-add">
       <label>새 초동 루트의 A 카드<select aria-label="새 루트 A 카드" value={choice} onChange={e=>setChoice(e.target.value)}>
@@ -112,21 +165,26 @@ export default function CombinationLab({study,sourceMain,hand,cardNames,onChange
       <small>분석에 반영된 위험 ID {plan.brickIds.length}종. 태그 가져오기도 수동 편집으로 저장돼.</small>
     </div>
     {unknown.length>0&&<div className="combo-unknown" role="status"><AlertTriangle size={16}/> 메인 덱에 없는 지정 ID: {unknown.slice(0,8).join(', ')}{unknown.length>8?' 외 '+(unknown.length-8)+'종':''}. 해당 카드는 현재 확률에 기여하지 않아.</div>}
-    {metrics.canCalculate&&<div className="combo-metrics">
+    {metrics?.canCalculate&&<div className="combo-metrics">
       <div className="combo-result-grid">
-        <Ratio title="하나 이상의 루트 성립 (OR)" value={metrics.anyRoute} baseline={original.anyRoute} helper={'첫 패 '+hand+'장 기준'}/>
-        <Ratio title="모든 루트 실패" value={metrics.noRoute} baseline={original.noRoute} helper="모든 루트 미성립"/>
+        <Ratio title="하나 이상의 루트 성립 (OR)" value={metrics.anyRoute} baseline={original?.anyRoute??null} helper={'첫 패 '+hand+'장 기준'}/>
+        <Ratio title="모든 루트 실패" value={metrics.noRoute} baseline={original?.noRoute??null} helper="모든 루트 미성립"/>
         {plan.brickIds.length>0&&<>
-          <Ratio title="루트 성립 + 말림 동반" value={metrics.withRisk} baseline={original.withRisk} helper="성공과 위험이 같은 패에 존재"/>
-          <Ratio title="루트 성립 + 말림 없음" value={metrics.withoutRisk} baseline={original.withoutRisk} helper="지정 위험 카드 0장"/>
-          <Ratio title="루트 실패 + 말림 동반" value={metrics.failedWithRisk} baseline={original.failedWithRisk} helper="초동 없음과 위험 카드 존재"/>
-          <Ratio title="말림 카드 최소 1장" value={metrics.riskChance} baseline={original.riskChance} helper="루트 성립 여부와 무관"/>
+          <Ratio title="루트 성립 + 말림 동반" value={metrics.withRisk} baseline={original?.withRisk??null} helper="성공과 위험이 같은 패에 존재"/>
+          <Ratio title="루트 성립 + 말림 없음" value={metrics.withoutRisk} baseline={original?.withoutRisk??null} helper="지정 위험 카드 0장"/>
+          <Ratio title="루트 실패 + 말림 동반" value={metrics.failedWithRisk} baseline={original?.failedWithRisk??null} helper="초동 없음과 위험 카드 존재"/>
+          <Ratio title="말림 카드 최소 1장" value={metrics.riskChance} baseline={original?.riskChance??null} helper="루트 성립 여부와 무관"/>
         </>}
       </div>
       <div className="combo-per-route"><strong>개별 루트 확률 (중복될 수 있어 서로 더하면 안 됨)</strong>
-        {metrics.perRoute.map((r,i)=><div key={r.id}><span>{r.label}</span><strong>{pct(r.probability)}</strong><small>원본 대비 {delta(r.probability,original.perRoute[i]?.probability??null)}</small></div>)}</div>
+        {metrics.perRoute.map((r,i)=><div key={r.id}><span>{r.label}</span><strong>{pct(r.probability)}</strong><small>원본 대비 {delta(r.probability,original?.perRoute[i]?.probability??null)}</small></div>)}</div>
     </div>}
-    {!metrics.canCalculate&&<p className="combo-pending">{study.main.length>60?'현재 메인 덱이 60장을 초과해. 카드 목록은 보존되지만 조합 확률은 60장 이하에서만 계산할 수 있어.':plan.routes.length===0?'분석할 초동 루트를 추가하면 계산 결과가 나타나.':'첫 패 장수보다 메인 덱이 적어서 확률을 계산할 수 없어.'}</p>}
-    <p className="combo-foot"><AlertTriangle size={15}/> A+B는 서로 다른 실제 카드 두 장이 필요해. 모든 값은 메인 덱에서 첫 패를 무작위로 뽑을 확률이야. 서치·효과 발동 조건·소환 제약·상대 견제에 따른 실제 전개 성공은 검증하지 않아.</p>
+    {calcError&&advanced&&<p className="combo-error" role="alert">{calcError}</p>}
+    {!metrics?.canCalculate&&<p className="combo-pending" role="status">
+      {study.main.length>60?'현재 메인 덱이 60장을 초과해. 조합 확률은 60장 이하에서만 계산할 수 있어.':
+      plan.routes.length===0?'분석할 초동 루트를 추가하면 계산 결과가 나타나.':
+      metrics?.limitReason||(!result?'복합 조건 확률 계산 중…':'루트 조건 또는 덱 장수를 확인해.')}
+    </p>}
+    <p className="combo-foot"><AlertTriangle size={15}/> A+B에는 실물 두 장, 별도 자원에는 A/B와 다른 ID의 실물 카드가 필요해. 금지 그룹은 해당 루트에만 적용돼. 모든 값은 첫 패의 무작위 추출 확률이야. 서치·효과 발동 조건·소환 제약·상대 견제에 따른 실제 전개 성공은 검증하지 않아.</p>
   </section>;
 }
