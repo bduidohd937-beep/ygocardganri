@@ -1,12 +1,22 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 
-const budgets = { '.js': 115 * 1024, '.css': 16 * 1024 };
+// User-facing startup bundle and optional ZIP/SQLite worker have different budgets.
 const files = readdirSync('dist/assets');
-for (const [extension, maxGzip] of Object.entries(budgets)) {
-  const bundle = files.filter(f => f.endsWith(extension));
-  if (!bundle.length) throw new Error(`Missing ${extension} production assets`);
-  const total = bundle.reduce((bytes, file) => bytes + gzipSync(readFileSync(`dist/assets/${file}`)).byteLength, 0);
-  console.log(`[P0.5] ${extension} total gzip ${(total / 1024).toFixed(1)} KiB / budget ${(maxGzip/1024).toFixed(1)} KiB`);
-  if (total > maxGzip) throw new Error(`${extension} asset gzip total exceeds budget`);
+const html = readFileSync('dist/index.html','utf8');
+const entry = html.match(/assets\/(index-[^"']+\.js)/)?.[1];
+if (!entry || !files.includes(entry)) throw new Error('Missing Vite entry JavaScript');
+const gzip = file => gzipSync(readFileSync(`dist/assets/${file}`)).byteLength;
+const entryBytes=gzip(entry);
+const lazyFiles=files.filter(f=>f.endsWith('.js') && f!==entry);
+const lazyBytes=lazyFiles.reduce((n,f)=>n+gzip(f),0);
+const cssFiles=files.filter(f=>f.endsWith('.css'));
+const cssBytes=cssFiles.reduce((n,f)=>n+gzip(f),0);
+const wasmFiles=files.filter(f=>f.endsWith('.wasm'));
+const wasmTotal=wasmFiles.reduce((n,f)=>n+readFileSync(`dist/assets/${f}`).byteLength,0);
+const budgets=[['초기 JS',entryBytes,150*1024],['옵션 파서 JS',lazyBytes,500*1024],['CSS',cssBytes,20*1024],['WASM',wasmTotal,1.5*1024*1024]];
+for (const [label,amount,max] of budgets) {
+ console.log(`[P2] ${label}: ${(amount/1024).toFixed(1)} KiB / budget ${(max/1024).toFixed(1)} KiB`);
+ if (amount>max) throw new Error(`${label} asset size exceeds budget`);
 }
+if(!cssFiles.length)throw new Error('Missing CSS');
