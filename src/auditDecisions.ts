@@ -1,6 +1,6 @@
 /** P4 manual triage is separate from all approved texts and implementation states. */
-export type AuditTriageStatus='검토중'|'조치 필요'|'확인됨(수동)'|'오탐(수동)';
-export type AuditDecision={key:string;themeId:string;passcode:string;status:AuditTriageStatus;note:string;at:string};
+export type AuditTriageStatus='검토중'|'조치 필요'|'확인됨(수동)'|'오탐(수동)'|'수정안 내보내기 승인(수동)';
+export type AuditDecision={key:string;themeId:string;passcode:string;status:AuditTriageStatus;note:string;at:string;patch?:{assetId:string;sourceHash:string;filename:string;start:number;end:number;before:string;after:string;proposedHash:string}};
 const DATABASE='ygo_card_studio_static_audit';
 function openDB():Promise<IDBDatabase>{
   return new Promise((resolve,reject)=>{
@@ -21,8 +21,15 @@ export async function getAuditDecisions(themeId:string):Promise<AuditDecision[]>
 }
 export async function recordAuditDecision(input:Omit<AuditDecision,'at'>):Promise<AuditDecision>{
   if(!input.key||!input.themeId||!input.passcode)throw new Error('검토 대상이 유효하지 않습니다.');
-  if(!['검토중','조치 필요','확인됨(수동)','오탐(수동)'].includes(input.status))throw new Error('검토 상태가 유효하지 않습니다.');
-  if(['확인됨(수동)','오탐(수동)'].includes(input.status)&&!input.note.trim())throw new Error('확인·오탐 판정에는 근거 메모가 필요합니다.');
+  if(!['검토중','조치 필요','확인됨(수동)','오탐(수동)','수정안 내보내기 승인(수동)'].includes(input.status))throw new Error('검토 상태가 유효하지 않습니다.');
+  if(['확인됨(수동)','오탐(수동)','수정안 내보내기 승인(수동)'].includes(input.status)&&!input.note.trim())throw new Error('확인·오탐 판정에는 근거 메모가 필요합니다.');
+  if(input.status==='수정안 내보내기 승인(수동)') {
+    const p=input.patch;
+    if(!p||!p.assetId||!p.sourceHash||!p.filename||!p.proposedHash||!Number.isInteger(p.start)||
+      !Number.isInteger(p.end)||p.start<0||p.end<=p.start||!p.before||!p.after) {
+      throw new Error('Lua 수정안 승인 근거와 파일 식별자가 유효하지 않습니다.');
+    }
+  }
   const decision={...input,note:input.note.trim().slice(0,2000),at:new Date().toISOString()};
   const db=await openDB();
   try{await new Promise<void>((resolve,reject)=>{
