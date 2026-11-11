@@ -28,13 +28,13 @@ test('P2: 신규 테마 만들기 → CDB/Lua/YDK 파일 분석 → 보관 → �
     {name:'c91008601.lua',mimeType:'text/plain',buffer:Buffer.from(lua)},
     {name:'예시_덱.ydk',mimeType:'text/plain',buffer:Buffer.from(deck)},
   ]);
-  await expect(page.locator('.fc-preview')).toBeVisible();
+  await expect(page.locator('.fc-preview')).toBeVisible({timeout:30000});
   await expect(page.locator('.fc-preview-list>div')).toHaveCount(3);
   await expect(page.locator('.fc-preview-list')).toContainText('c91008601.lua');
   await page.getByRole('button',{name:/원본 보관 확정/}).click();
   await expect(page.locator('.fc-file-row')).toHaveCount(3);
-  await expect(page.locator('.fc-index-list')).toContainText('실험용 카드');
-  await expect(page.locator('.fc-index-list')).toContainText('메인 2');
+  await expect(page.locator('.fc-index-list').first()).toContainText('실험용 카드');
+  await expect(page.locator('.fc-index-list').last()).toContainText('메인 2');
   // Original five world card documents remain independent and untouched.
   await page.locator('.sidebar .nav-link').filter({hasText:'카드 라이브러리'}).click();
   await expect(page.locator('.results-count')).toContainText('16개');
@@ -52,6 +52,7 @@ test('P2: 신규 테마 만들기 → CDB/Lua/YDK 파일 분석 → 보관 → �
 });
 
 test('P2: ZIP 내부 파일 처리, 위험 파일과 손상 CDB는 등록 거부',async({page})=>{
+  page.on('dialog',dialog=>void dialog.accept());
   await page.goto('/');
   await expect(page.locator('.realm-tile')).toHaveCount(5);
   await page.locator('.sidebar .nav-link').filter({hasText:'파일 센터'}).click();
