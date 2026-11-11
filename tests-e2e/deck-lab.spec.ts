@@ -4,6 +4,8 @@ const ids=Array.from({length:20},(_,i)=>String(91008601+i));
 const ydk=['#created by P5 browser fixture','#main',...ids.flatMap(id=>[id,id]),'#extra','!side',''].join('\n');
 
 test('P5: import 40-card YDK, set role tags, compare probabilities, save and restore deck study',async({page})=>{
+  // Missing CDB names are expected: explicitly approve keeping the original YDK with unresolved IDs.
+  page.on('dialog',dialog=>void dialog.accept());
   await page.goto('/');
   await expect(page.locator('.realm-tile')).toHaveCount(5);
   await page.locator('.sidebar .nav-link').filter({hasText:'테마 라이브러리'}).click();
