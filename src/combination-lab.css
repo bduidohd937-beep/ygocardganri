@@ -46,3 +46,11 @@
 @media(max-width:900px){.combo-route-fields{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}.combo-route-fields>button{grid-column:1/-1;justify-content:center}}
 @media(max-width:680px){.combo-shell{padding:14px}.combo-route-fields{grid-template-columns:1fr}.combo-and{padding:0;text-align:center}.combo-route-fields>button{grid-column:1}.combo-result-grid{grid-template-columns:1fr}.combo-per-route>div{grid-template-columns:1fr auto}.combo-per-route small{grid-column:1/-1}}
 @media(prefers-reduced-motion:reduce){.combo-meter i{transition:none}}
+
+/* P5.2: narrow, readable route-specific feasibility requirements */
+.combo-constraints{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(120px,.68fr);gap:12px;padding-top:10px;border-top:1px solid #37434e}
+.combo-constraints label{display:flex;flex-direction:column;gap:8px;font-size:11px;color:#bdc6cc}
+.combo-constraints input,.combo-constraints select{width:100%;min-height:40px;background:#111820;border:1px solid #414d58;border-radius:3px;padding:8px 11px;color:#f0eae3;min-width:0}
+.combo-constraints input:focus-visible,.combo-constraints select:focus-visible{outline:2px solid #ac7973}
+@media(max-width:860px){.combo-constraints{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.combo-constraints label:last-child{grid-column:1/-1}}
+@media(max-width:600px){.combo-constraints{grid-template-columns:1fr}.combo-constraints label:last-child{grid-column:auto}}
