@@ -27,7 +27,13 @@ test('P4: imported CDB/Lua evidence → static analyzer → persistent manual tr
   await page.locator('.fc-open-index').filter({hasText:'P4 테스트 카드'}).click();
   await page.getByRole('button',{name:'정적 오류 분석'}).click();
   await page.getByRole('button',{name:'이 카드 분석 실행'}).click();
-  await expect(page.locator('.audit-rule').filter({hasText:'LUA_ID_MISMATCH'})).toHaveCount(1);
+  try { await expect(page.locator('.audit-rule').filter({hasText:'LUA_ID_MISMATCH'})).toHaveCount(1); }
+  catch(e) {
+    const errors=await page.locator('.audit-error').allTextContents();
+    const progress=await page.locator('.audit-progress').allTextContents();
+    const report=await page.locator('.audit-coverage').allTextContents();
+    throw new Error('P4 audit did not render: '+JSON.stringify({errors,progress,report})+' / '+String(e));
+  }
   await expect(page.locator('.audit-rule').filter({hasText:'COUNT_LIMIT_REVIEW'})).toHaveCount(1);
   await page.getByLabel('LUA_ID_MISMATCH 검토 상태').selectOption('조치 필요');
   await expect(page.locator('.audit-decision')).toContainText('조치 필요');
