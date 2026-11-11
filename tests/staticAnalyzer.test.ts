@@ -58,6 +58,12 @@ describe('P4: evidence-based static analyzer',()=>{
    const a=analyzeCard(input),b=analyzeCard(input);
    expect(a.map(f=>f.key)).toEqual(b.map(f=>f.key));expect(JSON.stringify(input)).toBe(before);
  });
+ it('unreadable Lua originals are not incorrectly diagnosed as missing initial_effect',()=>{
+   const input=base();input.lua=[{...lua(''),unavailable:true}];
+   const result=analyzeCard(input);
+   expect(result.some(f=>f.ruleId==='LUA_ORIGINAL_UNAVAILABLE')).toBe(true);
+   expect(result.some(f=>f.ruleId==='LUA_INITIAL_EFFECT')).toBe(false);
+ });
  it('batch report indicates partial coverage and never claims EDOPro verification',()=>{
    const report=analyzeBatch([base()],themeId,501);
    expect(report.scannedCards).toBe(1);expect(report.truncated).toBe(true);
