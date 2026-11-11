@@ -1,0 +1,15 @@
+.lua-patch{margin-top:12px;border-top:1px solid #303843;padding-top:12px}
+.lua-patch-details{border:1px solid #454d59;background:#12181f;border-radius:6px;padding:14px;margin-top:12px;display:grid;gap:12px}
+.lua-patch-details-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.lua-patch-details-head>span{font-size:11px;color:#b1b9c2;overflow-wrap:anywhere}
+.lua-patch-details>p{color:#c2c9d0;font-size:12px;line-height:1.6;display:flex;gap:7px;align-items:flex-start;margin:0}
+.lua-patch-diff{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.lua-patch-diff>div{min-width:0;border:1px solid #37404a;background:#0e1217;border-radius:4px}
+.lua-patch-diff small{display:block;padding:8px 10px;color:#cbd3da;border-bottom:1px solid #37404a}
+.lua-patch-diff pre{margin:0;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;max-height:200px;overflow:auto}
+.lua-patch-diff>div:first-child pre{color:#d99594}
+.lua-patch-diff>div:last-child pre{color:#98cbb5}
+.lua-patch-details>small{color:#adb7c1;font-size:11px;line-height:1.55}
+.lua-patch-error{color:#e0a49e;font-size:12px;margin:8px 0}
+.lua-patch-message{color:#98cbb5;font-size:12px;margin:8px 0}
+@media(max-width:750px){.lua-patch-diff{grid-template-columns:minmax(0,1fr)}}
