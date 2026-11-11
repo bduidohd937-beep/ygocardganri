@@ -25,5 +25,5 @@ jobs:
           GITHUB_PAGES: 'true'
 
       - run: npm run check:bundle
-      - run: npx playwright install --with-deps chromium
+      - run: google-chrome --version
       - run: npm run test:e2e
