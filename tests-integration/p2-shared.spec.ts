@@ -20,11 +20,11 @@ test('P2 공통 카드 등록·중복 충돌 방지·이미지 연구소 전달'
   await expect(page.getByRole('cell',{name:'RS－오리온'})).toBeVisible();
   await page.getByRole('checkbox',{name:'918760001 전송 선택'}).check();
   await page.getByRole('button',{name:'선택 카드 → 이미지 연구소'}).click();
-  await expect(page.getByText('공통 보관함에서 선택 카드 1장 대기')).toBeVisible();
-  const frame=page.frameLocator('iframe[title="이미지 연구소"]');
-  await expect(frame.getByText('YGO ART LAB').first()).toBeVisible();
+  await expect(page.getByText('공통 보관함 선택 카드',{exact:false})).toBeVisible();
+  const frame=page.locator('[data-native-tool="artlab"]');
+  await expect(frame.locator('#art-canvas')).toBeVisible({timeout:30000});
   await page.getByRole('button',{name:'선택 카드 신규만 가져오기'}).click();
-  await expect(page.getByText('이미지 연구소에 1장 가져오기 동작을 요청했습니다.',{exact:false})).toBeVisible();
+  await expect(page.getByText('이미지 연구소에 신규 1장 추가를 요청했습니다.',{exact:false})).toBeVisible();
   await expect(frame.getByText('RS－오리온').first()).toBeVisible();
 });
 test('P2 카드 렌더러 전달은 신규 ID만 적용하며 YDK는 존별 보존',async ({page})=>{
@@ -43,9 +43,9 @@ test('P2 카드 렌더러 전달은 신규 ID만 적용하며 YDK는 존별 보�
   await expect(page.getByText('메인 2 / 엑스트라 1 / 사이드 1')).toBeVisible();
   await page.getByRole('checkbox',{name:'918760002 전송 선택'}).check();
   await page.getByRole('button',{name:'선택 카드 → 카드 렌더러'}).click();
-  const maker=page.frameLocator('iframe[title="카드 렌더러"]');
-  await expect(maker.getByText('CARD STUDIO').first()).toBeVisible();
+  const maker=page.locator('[data-native-tool="cardmaker"]');
+  await expect.poll(()=>maker.evaluate(el=>el.shadowRoot?.querySelectorAll('select option[value="token"]').length??0),{timeout:30000}).toBe(1);
   await page.getByRole('button',{name:'선택 카드 신규만 가져오기'}).click();
-  await expect(page.getByText('신규 1장 가져오기 요청을 보냈습니다.',{exact:false})).toBeVisible();
+  await expect(page.getByText('렌더러에 신규 1장 가져오기를 요청했습니다.',{exact:false})).toBeVisible();
   await expect(maker.getByText('RS－세컨드 코너').first()).toBeVisible();
 });

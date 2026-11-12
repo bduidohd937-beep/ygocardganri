@@ -24,6 +24,8 @@ import FileCenter from './FileCenter';
 import ImportedCardStudio from './ImportedCardStudio';
 import AuditCenter from './AuditCenter';
 import IntegrationModule from './IntegrationModule';
+const NativeWorkspace=lazy(()=>import('./NativeWorkspace'));
+
 import SharedLibrary from './SharedLibrary';
 const MigrationCenter=lazy(()=>import('./MigrationCenter'));
 const StudioHome=lazy(()=>import('./StudioHome'));
@@ -369,8 +371,8 @@ export default function App(){
         {page==='decks'&&<><PageHeading eyebrow="DECK LAB / P5" title="덱 연구실" subtitle="YDK 원본과 분석안을 분리해 40~60장 구성·초동 패 확률·매수 시나리오를 연구합니다."/><Suspense fallback={<div className="not-yet">덱 연구실을 불러오는 중...</div>}><DeckLab/></Suspense></>}
         {page==='migration'&&<Suspense fallback={<div className="not-yet">데이터 이전 센터를 불러오는 중...</div>}><MigrationCenter studioData={data} onNavigate={go}/></Suspense>}
         {page==='shared'&&<SharedLibrary onOpenModule={target=>go(target)} initialFilter={activeProject.startsWith('shared:')?activeProject.slice(7):''}/>}
-        {page==='artlab'&&<IntegrationModule moduleId="artlab"/>}
-        {page==='cardmaker'&&<IntegrationModule moduleId="cardmaker"/>}
+        {page==='artlab'&&<Suspense fallback={<div className="not-yet">제작 작업실을 불러오는 중...</div>}><NativeWorkspace target="artlab"/></Suspense>}
+        {page==='cardmaker'&&<Suspense fallback={<div className="not-yet">제작 작업실을 불러오는 중...</div>}><NativeWorkspace target="cardmaker"/></Suspense>}
         {page==='designlab'&&<IntegrationModule moduleId="designlab"/>}
         {page==='arena'&&<IntegrationModule moduleId="arena"/>}
         {page==='history'&&<><PageHeading eyebrow="CHANGE HISTORY / AUDIT LOG" title="변경 이력" subtitle="승인된 카드 원문과 제안, 카드 정보 및 세계관 수정 기록을 추적합니다."/><div className="history-list">{data.history.length===0?<Empty icon={<History size={28}/>} title="기록이 비어 있습니다" detail="카드 정보 수정과 효과 제안, 승인 결과가 이곳에 쌓입니다."/>:shownHistory.map(h=><HistoryItem key={h.id} item={h}/>)}</div>{shownHistory.length<data.history.length&&<div className="more-results"><span>{shownHistory.length.toLocaleString('ko-KR')} / {data.history.length.toLocaleString('ko-KR')}건 표시</span><button className="outline-button" onClick={()=>setHistoryLimit(n=>n+HISTORY_PAGE_SIZE)}>다음 이력 {Math.min(HISTORY_PAGE_SIZE,data.history.length-shownHistory.length)}건 보기 <ChevronDown size={16}/></button></div>}</>}

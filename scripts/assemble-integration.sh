@@ -26,10 +26,17 @@ cp -R "$source_root/designlab/src" dist/modules/designlab/
 cp -R "$source_root/cardmaker/dist/." dist/modules/cardmaker/
 cp "$source_root/arena/index.html" dist/modules/arena/
 
+# Same-origin native workspaces: no iframe/secondary application chrome.
+test -s "$source_root/cardmaker/dist/embed/cardmaker.js"
+python3 scripts/build-native-artlab.py
+
 for path in dist/modules/{artlab,designlab,cardmaker,arena}/index.html; do
   test -s "$path" || { echo "::error::통합 모듈 진입점 누락: $path"; exit 1; }
 done
 test -s dist/modules/artlab/asset-engine.js
+test -s dist/modules/artlab/asset-engine-native.js
+test -s dist/modules/artlab/native.js
+test -s dist/modules/cardmaker/embed/cardmaker.js
 test -s dist/modules/designlab/src/main.js
 test -d dist/modules/cardmaker/assets
 test -s dist/modules/arena/index.html
