@@ -3,6 +3,7 @@ import { HANDOFF_KEY,cardMakerPayload,validHandoff } from './sharedCatalog';
 import type { Handoff,SharedCard } from './sharedCatalog';
 import { CheckCircle2,FileInput,Info,Layers3 } from 'lucide-react';
 import './native-workspace.css';
+import { nativeToolStyle } from './studioTheme';
 
 type Target='artlab'|'cardmaker';
 type NativeModule={mountCardMaker?:(host:HTMLElement)=>{root:ShadowRoot;unmount:()=>void};mountArtLab?:(root:ShadowRoot)=>()=>void};
@@ -115,7 +116,7 @@ async function mountArtLab(host:HTMLElement,isCancelled:()=>boolean,fullscreen:b
   shadow.replaceChildren();
   const style=document.createElement('style');
   style.textContent=':host{display:block;min-width:0;--bg:#090c13;--panel:#111722;--border:#253041;--muted:#8592a9;--txt:#eaf0fc;--blue:#8dabff;--accent:#b5c6ff;--font:"Noto Sans KR",system-ui,sans-serif;color:#eaf0fc;font:13px/1.6 var(--font);background:#090c13;isolation:isolate}\n'
-    +css+(fullscreen?'\n:host .shell{max-width:1510px;margin:0 auto;padding:0 34px 45px}:host .ambient{display:none}':'\n:host .shell{max-width:none;margin:0;padding:0 0 24px}:host .hero{padding-top:10px}:host .workspace{margin-top:13px}:host .ambient{display:none}');
+    +css+(fullscreen?'\n:host .shell{max-width:1510px;margin:0 auto;padding:0 34px 45px}:host .ambient{display:none}':'\n:host .shell{max-width:none;margin:0;padding:0 0 24px}:host .hero{padding-top:10px}:host .workspace{margin-top:13px}:host .ambient{display:none}')+'\n'+nativeToolStyle('artlab');
   shadow.append(style,app,toast);
   await loadAssetEngine(base);
   if(isCancelled()){if(shadow.contains(app))shadow.replaceChildren();return null;}
@@ -145,6 +146,10 @@ async function mountMaker(host:HTMLElement,isCancelled:()=>boolean,fullscreen:bo
     `;
     instance.root.appendChild(style);
   }
+  const theme=document.createElement('style');
+  theme.id='ygo-studio-native-theme';
+  theme.textContent=nativeToolStyle('cardmaker');
+  instance.root.appendChild(theme);
   return instance;
 }
 /** Native same-origin DOM workspaces. No iframe or nested application navigation. */
@@ -156,6 +161,11 @@ export default function NativeWorkspace({target,fullscreen=false}:{target:Target
   const [message,setMessage]=useState('');
   const [handoff,setHandoff]=useState<Handoff|null>(()=>savedHandoff(target));
   const [busy,setBusy]=useState(false);
+  const [transferOpen,setTransferOpen]=useState(false);
+  const [transferBusy,setTransferBusy]=useState(false);
+  const [transferInfo,setTransferInfo]=useState('');
+  const transferJsonInput=useRef<HTMLInputElement|null>(null);
+  const transferAssetsInput=useRef<HTMLInputElement|null>(null);
   useEffect(()=>{
     let cancelled=false;
     setReady(false);setError('');setMessage('');setHandoff(savedHandoff(target));
@@ -179,12 +189,56 @@ export default function NativeWorkspace({target,fullscreen=false}:{target:Target
     }catch(e){setMessage('가져오기 실패: '+String(e));}
     finally{setBusy(false);}
   };
+  const transferLegacyFile=async(kind:'cards'|'assets',file:File|null)=>{
+    if(!file)return;
+    const original=mounted.current;
+    if(!original||!ready||transferBusy){setTransferInfo('렌더러가 준비되지 않았습니다.');return;}
+    setTransferBusy(true);
+    setTransferInfo('');
+    try{
+      if(kind==='cards'){
+        if(!/\.json$/i.test(file.name)||file.size>60*1024*1024)throw Error('60MiB 이하의 프로젝트 JSON만 선택하세요.');
+        const value:unknown=JSON.parse(await file.text());
+        const cards=Array.isArray(value)?value: value!==null&&typeof value==='object'&&'cards' in value?(value as {cards?:unknown}).cards:null;
+        if(!Array.isArray(cards)||cards.length<1||cards.length>2000)throw Error('cards 배열에 1~2000장이 있는 프로젝트 JSON이 필요합니다.');
+        if(!window.confirm('로컬 카드 '+cards.length+'장을 가져올까요? 같은 ID는 기존 렌더러의 병합 규칙을 따르며 기존 일러스트는 보존합니다. 기존 카드 프로젝트의 JSON 백업을 먼저 권장합니다.'))return;
+      }else{
+        if(!/\.zip$/i.test(file.name)||file.size>90*1024*1024)throw Error('90MiB 이하의 카드 프레임 리소스 ZIP만 선택하세요.');
+        if(!window.confirm('선택한 ZIP을 현재 프레임·폰트 리소스에 적용할까요? 기존 커스텀 리소스팩은 교체됩니다. 카드 정보와 일러스트는 유지됩니다.'))return;
+      }
+      const selector=kind==='cards'?'input[aria-label="카드 데이터 파일"]':'input[aria-label="카드 프레임 리소스 ZIP"]';
+      const source=original.root.querySelector<HTMLInputElement>(selector);
+      if(!source)throw Error('원본 카드 메이커의 가져오기 입력창을 찾을 수 없습니다.');
+      const data=new DataTransfer();data.items.add(file);source.files=data.files;
+      source.dispatchEvent(new Event('change',{bubbles:true,composed:true}));
+      setTransferInfo(kind==='cards'?'카드 JSON을 원본 렌더러의 가져오기 기능에 전달했습니다. 카드 목록·일러스트를 확인하세요.':'리소스 ZIP을 원본 렌더러에 전달했습니다. 왼쪽 하단의 에셋팩 이름·적용 건수와 실제 카드 프레임을 확인하세요.');
+    }catch(e){setTransferInfo('파일 검수/전달 실패: '+String(e));}
+    finally{setTransferBusy(false);}
+  };
   const info=metadata[target];
   return <section className={`native-workspace ${fullscreen?'native-workspace--fullscreen':''}`} aria-label={info.title}>
     {!fullscreen&&<div className="native-workspace-header">
       <div><span>YGO STUDIO · NATIVE WORKSPACE V2.2</span><h1>{info.title}</h1><p>{info.desc}</p></div>
       <div className="native-workspace-ok"><CheckCircle2 size={15}/> 한 화면에서 직접 실행</div>
     </div>}
+    {fullscreen&&target==='cardmaker'&&<>
+      <button className="native-transfer-trigger" type="button" onClick={()=>setTransferOpen(true)} aria-label="로컬 카드와 프레임 에셋 옮기기">로컬 자료 옮기기</button>
+      {transferOpen&&<div className="native-transfer-scrim" onMouseDown={e=>{if(e.target===e.currentTarget)setTransferOpen(false);}}>
+        <section className="native-transfer-dialog" role="dialog" aria-modal="true" aria-label="로컬 DUELMIND 자료 이전" onKeyDown={e=>{if(e.key==='Escape')setTransferOpen(false);}}>
+          <div className="native-transfer-head"><strong>로컬 카드·프레임 이전</strong><button type="button" onClick={()=>setTransferOpen(false)} aria-label="자료 이전 닫기">닫기</button></div>
+          <p>로컬 <code>127.0.0.1:5173</code>과 YGO STUDIO는 서로 다른 브라우저 저장소를 사용합니다. 카드 JSON과 사용했던 커스텀 프레임 ZIP을 <strong>각각</strong> 가져와야 원래 모습을 재현할 수 있어요.</p>
+          <ol><li>로컬 카드 메이커에서 <strong>JSON 저장</strong>을 눌러 프로젝트를 다운로드합니다.</li><li>로컬에서 적용했던 <strong>원본 프레임 ZIP</strong>을 PC에서 찾습니다.</li><li>아래 버튼으로 두 파일을 차례로 선택합니다. 기존 웹 카드의 JSON 백업도 권장합니다.</li></ol>
+          <div className="native-transfer-actions">
+            <button type="button" disabled={!ready||transferBusy} onClick={()=>transferJsonInput.current?.click()}>1. 카드 프로젝트 JSON 선택</button>
+            <button type="button" disabled={!ready||transferBusy} onClick={()=>transferAssetsInput.current?.click()}>2. 프레임·폰트 ZIP 선택</button>
+          </div>
+          <input ref={transferJsonInput} type="file" accept=".json,application/json" aria-label="로컬 카드 프로젝트 JSON" hidden onChange={e=>{const file=e.target.files?.[0]??null;e.target.value='';void transferLegacyFile('cards',file);}}/>
+          <input ref={transferAssetsInput} type="file" accept=".zip,application/zip" aria-label="로컬 프레임 리소스 ZIP" hidden onChange={e=>{const file=e.target.files?.[0]??null;e.target.value='';void transferLegacyFile('assets',file);}}/>
+          {!!transferInfo&&<p role="status" className="native-transfer-status">{transferInfo}</p>}
+          <small>로컬 저장소를 원격으로 읽거나 원본 ZIP을 GitHub에 업로드하지 않습니다. 데이터 가져오기 결과는 렌더러에서 확인해야 합니다.</small>
+        </section>
+      </div>}
+    </>}
     {handoff&&<div className="native-workspace-handoff">
       <div><FileInput size={18}/><span>공통 보관함 선택 카드 <strong>{handoff.cards.length}장</strong> · 기존 카드 보존</span></div>
       <button disabled={!ready||busy} onClick={()=>void apply()}>{busy?'확인 중...':'선택 카드 신규만 가져오기'}</button>

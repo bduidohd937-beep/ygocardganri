@@ -15,3 +15,22 @@
 .native-workspace-info{display:flex;align-items:center;gap:8px;padding:12px;background:#20343a;border:1px solid #397a7a;color:#d6eeef;font-size:12px;line-height:1.65}
 .native-workspace-error{padding:13px;background:#392329;border:1px solid #8f4b59;color:#ffd0d0;font-size:12px}
 @media(max-width:720px){.native-workspace-header h1{font-size:23px}.native-workspace-mount{min-height:500px}}
+
+/* V2.4 local-to-web card and asset migration; drawer keeps the original renderer unmodified. */
+.native-transfer-trigger{position:fixed;z-index:110;top:8px;right:16px;display:inline-flex;align-items:center;justify-content:center;padding:6px 12px;min-height:30px;border:1px solid #a47676;border-radius:7px;background:#352931;color:#efd4ce;font-size:11px;font-weight:700;cursor:pointer}
+.native-transfer-trigger:hover{background:#4b3339;border-color:#db9d92}
+.native-transfer-trigger:focus-visible{outline:2px solid #dca399;outline-offset:2px}
+.native-transfer-scrim{position:fixed;inset:46px 0 0;z-index:120;background:#080b10bb;display:grid;place-items:start center;overflow-y:auto;padding:clamp(12px,4vh,36px) 14px}
+.native-transfer-dialog{width:min(680px,100%);border:1px solid #80646a;border-radius:12px;background:#1c242e;box-shadow:0 24px 72px #0009;padding:22px;color:#e9e9ee;display:grid;gap:14px}
+.native-transfer-head{display:flex;align-items:center;justify-content:space-between;gap:15px}
+.native-transfer-head strong{font-size:18px}
+.native-transfer-head button,.native-transfer-actions button{border:1px solid #746469;border-radius:6px;background:#362a32;color:#f0d7cf;cursor:pointer;padding:9px 12px;font-size:12px;font-weight:700}
+.native-transfer-head button:hover,.native-transfer-actions button:hover{background:#503640}
+.native-transfer-actions button:disabled{opacity:.45;cursor:not-allowed}
+.native-transfer-dialog p,.native-transfer-dialog li,.native-transfer-dialog small{font-size:12px;line-height:1.85;color:#b9c5d2;margin:0}
+.native-transfer-dialog ol{display:grid;gap:6px;margin:0;padding-left:23px}
+.native-transfer-actions{display:flex;gap:9px;flex-wrap:wrap}
+.native-transfer-dialog code{color:#f2c5b8}
+.native-transfer-dialog strong{color:#f0e9e6}
+.native-transfer-dialog .native-transfer-status{border:1px solid #537d71;background:#1b3733;color:#bee4db;padding:11px;border-radius:7px}
+@media(max-width:560px){.native-transfer-trigger{right:8px;font-size:10px;padding:6px}.native-transfer-dialog{padding:15px}.native-transfer-actions{flex-direction:column}}
