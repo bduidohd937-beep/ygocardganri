@@ -6,7 +6,7 @@ import {
 import type { Handoff, ImportCandidate, SharedCatalog } from './sharedCatalog';
 import SharedMediaSection from './SharedMediaSection';
 import DeckLinkPanel from './DeckLinkPanel';
-import type {MediaItem} from './sharedMedia';
+import {listMedia,type MediaItem} from './sharedMedia';
 import './shared-library.css';
 
 const MAX_UPLOAD=3*1024*1024;
@@ -75,6 +75,7 @@ export default function SharedLibrary({onOpenModule,initialFilter=''}:Props){
   const [initial]=useState(initCatalog);
   const [catalog,setCatalog]=useState(initial.catalog);
   const [mediaItems,setMediaItems]=useState<MediaItem[]>([]);
+  const [mediaRefresh,setMediaRefresh]=useState(0);
   const [blocked]=useState(initial.error);
   const [preview,setPreview]=useState<{candidate:ImportCandidate;name:string}|null>(null);
   const [message,setMessage]=useState('');
@@ -89,6 +90,14 @@ export default function SharedLibrary({onOpenModule,initialFilter=''}:Props){
     if(blocked)throw Error('기존 공통 보관함에 문제가 있어 쓰기를 차단했습니다.');
     localStorage.setItem(CATALOG_KEY,JSON.stringify(next));
     setCatalog(next);
+  };
+  const recoverySave=(next:SharedCatalog,expected:string)=>{
+    const current=localStorage.getItem(CATALOG_KEY)||JSON.stringify(emptyCatalog());
+    if(current!==expected)throw Error('다른 탭에서 공통 원장을 수정했습니다. 덮어쓰지 않습니다.');
+    save(next);
+  };
+  const recoveryImagesChanged=async()=>{
+    setMediaItems(await listMedia());setMediaRefresh(x=>x+1);
   };
   const stage=(candidate:ImportCandidate,label:string)=>{
     setPreview({candidate,name:label});setMessage('가져오기를 미리 확인한 뒤 확정하세요. 기존 카드 ID는 자동 덮어쓰지 않습니다.');
@@ -170,7 +179,7 @@ export default function SharedLibrary({onOpenModule,initialFilter=''}:Props){
       <div><strong>{visibleSelection.length}</strong><span>전송 선택 카드</span></div>
     </div>
     <div className="shared-warning" role="note"><strong>데이터 이전은 보수적으로 처리합니다.</strong> 기존 사이트와 통합 사이트의 저장공간은 다릅니다. 카드·덱 메타는 ID 기준으로 안전하게 관리하고, 이미지 연결은 아래 공통 이미지 보관함에 별도 복사합니다. 원본 EDOPro·CDB·Lua 및 승인·검증 결과는 변경하지 않으며, 동일 카드 ID의 다른 원문은 충돌로 남겨 덮어쓰지 않습니다.</div>
-    <SharedMediaSection cards={catalog.cards} blocked={!!blocked} onItemsChange={setMediaItems}/>
+    <SharedMediaSection cards={catalog.cards} blocked={!!blocked} onItemsChange={setMediaItems} refreshToken={mediaRefresh}/>
     {blocked&&<div className="shared-error" role="alert">{blocked}</div>}
     {message&&<div className="shared-message" role="status">{message}</div>}
     <section className="shared-panel">
@@ -214,6 +223,6 @@ export default function SharedLibrary({onOpenModule,initialFilter=''}:Props){
       </div>
       {catalog.cards.length>300&&<p className="shared-help">목록 성능 보호를 위해 검색 결과 상위 300장만 표시합니다.</p>}
     </section>
-    <DeckLinkPanel decks={catalog.decks} cards={catalog.cards} media={mediaItems}/>
+    <DeckLinkPanel decks={catalog.decks} cards={catalog.cards} media={mediaItems} catalog={catalog} blocked={!!blocked} onSave={recoverySave} onImagesChanged={recoveryImagesChanged}/>
   </div>;
 }
