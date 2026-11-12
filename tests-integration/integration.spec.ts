@@ -8,7 +8,7 @@ test('YGO STUDIO 통합 메뉴에서 4개 정적 모듈을 불러온다', async 
     { nav: '이미지 연구소', title: '이미지 연구소', path: 'artlab', text: 'YGO ART LAB' },
     { nav: '카드 렌더러', title: '카드 렌더러', path: 'cardmaker', text: 'CARD STUDIO' },
     { nav: '디자인·덱 실험실', title: '디자인·덱 실험실', path: 'designlab', text: 'DESIGN LAB' },
-    { nav: 'PSH 검증 관제실', title: 'PSH 검증 관제실', path: 'arena', text: 'PSH AI ARENA' },
+    { nav: 'PSH 검증 관제실', title: 'PSH 검증 관제실', path: 'arena', text: 'MSG16 응답 이후' },
   ];
   for (const module of modules) {
     await page.getByRole('button', { name: module.nav, exact: true }).click();
