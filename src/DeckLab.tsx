@@ -219,8 +219,8 @@ export default function DeckLab(){
         <Probability label="말림 ≥2장" value={current.atLeastTwoBricks} baseline={baseline?.atLeastTwoBricks??null} foot="말림 태그 ≥2장" enabled={current.brick>0}/>
       </div>
       <p className="decklab-assumption"><AlertTriangle size={15}/> 역할 태그는 사용자가 직접 지정하며, 검색·드로우·덱 특수 소환·카드명 중복 효과와 실제 전개 성공률을 반영하지 않아. 패 5/6장을 비복원 무작위 추출한 정확한 확률이고, 카드군·금제 적법성도 별도 확인이 필요해.</p>
-      {study&&source&&<CombinationLab key={study.id} study={study} sourceMain={source.main} hand={hand} cardNames={cardNames} onChange={plan=>modify(s=>({...s,combinations:plan}))}/>}
-      {study&&<TestLab key={study.id} study={study} dirty={changed} handSize={hand}/>}
+      {study&&source&&<CombinationLab key={'combo-'+study.id} study={study} sourceMain={source.main} hand={hand} cardNames={cardNames} onChange={plan=>modify(s=>({...s,combinations:plan}))}/>}
+      {study&&<TestLab key={'test-'+study.id} study={study} dirty={changed} handSize={hand}/>}
       <div className="decklab-subhead"><div><span className="micro-label">MAIN DECK / MANUAL CLASSIFICATION</span><h3>메인 덱 카드 및 역할</h3></div>
         <span>{study?'채용 매수와 역할 수정 가능':'분류하려면 새 분석안을 만들어 줘'}</span></div>
       {study&&<div className="decklab-add"><label>카드 ID 추가<input aria-label="추가할 카드 ID" value={newId} inputMode="numeric" maxLength={12} placeholder="예: 91008601" onChange={e=>setNewId(e.target.value)}/></label>
