@@ -38,7 +38,8 @@ describe('V2.8 / 덱·카드·일러스트 연결 판정',()=>{
     expect(r.zones[0].entries[1].hasImage).toBe(true);
   });
   it('원본 카드·덱 배열을 변경하지 않고 빈 덱도 안전하게 분석한다',()=>{
-    const frozenDeck={...deck,main:Object.freeze([...deck.main]),extra:Object.freeze([...deck.extra]),side:Object.freeze([...deck.side])};
+    const frozenDeck:SharedDeck={...deck,main:[...deck.main],extra:[...deck.extra],side:[...deck.side]};
+    Object.freeze(frozenDeck.main);Object.freeze(frozenDeck.extra);Object.freeze(frozenDeck.side);
     const frozenCards=Object.freeze([...cards]);
     buildDeckLinkReport(frozenDeck,frozenCards,new Set(['101']));
     expect(deck.main).toEqual(['101','101','102','999']);
