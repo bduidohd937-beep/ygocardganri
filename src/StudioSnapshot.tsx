@@ -80,7 +80,7 @@ export default function StudioSnapshot(){
     </div>
     {!!info&&<p className="snapshot-message" role="status">{info}</p>}
     {!!error&&<p className="snapshot-error" role="alert">{error}</p>}
-    {preview&&<div className="snapshot-restore" aria-label="복원 미리보기">
+    {preview&&<div className="snapshot-restore" role="region" aria-label="복원 미리보기">
       <div className="snapshot-restore-title"><FileArchive size={17}/><strong>복원 미리보기</strong>
         <span>신규 {preview.missing}건 · 기존 보존 {preview.existing}건</span></div>
       <div className="snapshot-rows">{preview.byDataset.map(x=><label key={x.id} className="snapshot-row">
