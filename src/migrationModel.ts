@@ -35,8 +35,11 @@ export function inspectMigrationFile(filename:string,raw:unknown):MigrationInspe
     if(validateBackup(raw))return result('studio',raw.cards.length,'녹투르나 원장·승인·이력을 포함합니다. 기존 원장과 자동 병합하지 않습니다.');
     if(validateWorkbenchBackup(raw))return result('workbench',raw.records.length,'외부 테마 카드의 승인/검수 메모. 기존 문서에 자동 반영하지 않습니다.');
     if(validateCatalog(raw))return result('shared',raw.cards.length,'카드 ID·이름·효과 및 덱 구성. 충돌 검토 후 메타만 병합할 수 있습니다.',true);
-    if(isObject(raw)&&raw.app==='PSH AI ARENA 검증 관제실'&&raw.schemaVersion===1&&isObject(raw.data)&&raw.data.schemaVersion===1&&['sessions','events','tests','features','issues','protection'].every(k=>Array.isArray(raw.data[k]))){
-      return result('psh',((raw.data as Record<string,unknown>).sessions as unknown[]).length,'관제실 세션 및 결함 기록. 실전 결과 인증이나 기존 관제실 덮어쓰기는 하지 않습니다.');
+    if(isObject(raw)&&raw.app==='PSH AI ARENA 검증 관제실'&&raw.schemaVersion===1){
+      const payload=raw.data;
+      if(isObject(payload)&&payload.schemaVersion===1&&['sessions','events','tests','features','issues','protection'].every(k=>Array.isArray(payload[k]))){
+        return result('psh',(payload.sessions as unknown[]).length,'관제실 세션 및 결함 기록. 실전 결과 인증이나 기존 관제실 덮어쓰기는 하지 않습니다.');
+      }
     }
     if(isObject(raw)&&raw.version===1&&typeof raw.name==='string'&&Array.isArray(raw.cards)&&raw.cards.length<=2000&&raw.cards.every(c=>isObject(c)&&validCardId(c.id)!==null&&typeof c.name==='string'&&typeof c.frame==='string')){
       return result('cardmaker',raw.cards.length,'렌더러 카드 속성·일러스트를 원본으로 보관. 공통 카드 메타만 선택적으로 가져오기 가능',true);
