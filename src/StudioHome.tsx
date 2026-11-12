@@ -4,6 +4,7 @@ import {
   ShieldCheck, Swords
 } from 'lucide-react';
 import type { Card, StudioData } from './data';
+import './studio-v2-home.css';
 import type { SharedCatalog } from './sharedCatalog';
 import type { ProjectOption, StudioScope } from './studioV2Model';
 
