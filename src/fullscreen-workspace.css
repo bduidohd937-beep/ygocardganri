@@ -1,0 +1,16 @@
+/* V2.3: a workspace is the page, not a card inside the studio dashboard. */
+.studio-fullscreen{position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;z-index:100;background:#11161c;color:#e6ebf1;display:flex;flex-direction:column;overflow:hidden}
+.studio-fullscreen-returnbar{height:46px;min-height:46px;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid #35404a;background:#121820;z-index:2}
+.studio-fullscreen-back{display:inline-flex;align-items:center;gap:9px;background:#26323e;color:#e9f3f7;border:1px solid #526071;border-radius:7px;padding:8px 12px;font-size:12px;line-height:1.25;font-weight:650;white-space:nowrap;cursor:pointer}
+.studio-fullscreen-back:hover{border-color:#b58a80;background:#3b343a}
+.studio-fullscreen-back:focus-visible{outline:2px solid #d4a094;outline-offset:2px}
+.studio-fullscreen-identity{display:inline-flex;align-items:center;gap:8px;color:#aab8c4;font:11px 'Noto Sans KR',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.studio-fullscreen-identity svg{flex:0 0 auto}
+.studio-fullscreen-stage{width:100%;height:calc(100dvh - 46px);min-height:0;flex:1;overflow:hidden;display:flex;flex-direction:column}
+.studio-fullscreen-legacy{display:block;border:0;width:100%;height:100%;flex:1;min-height:0;background:#0e1319}
+.studio-fullscreen-loading{display:grid;place-items:center;flex:1;color:#a8b9c9;font-size:13px}
+.studio-fullscreen .native-workspace--fullscreen{flex:1;min-height:0;min-width:0;height:100%;display:flex;flex-direction:column;gap:0}
+.studio-fullscreen .native-workspace--fullscreen .native-workspace-mount{flex:1;min-height:0;width:100%;height:100%;border:0;border-radius:0;overflow:auto;background:#15191f;scrollbar-width:thin}
+.studio-fullscreen .native-workspace--fullscreen .native-workspace-handoff{border-radius:0;flex-shrink:0;margin:0;padding:9px 14px}
+.studio-fullscreen .native-workspace--fullscreen .native-workspace-info,.studio-fullscreen .native-workspace--fullscreen .native-workspace-error,.studio-fullscreen .native-workspace--fullscreen .native-workspace-loading{margin:0;border-radius:0;flex-shrink:0}
+@media(max-width:650px){.studio-fullscreen-returnbar{gap:8px;padding:0 8px}.studio-fullscreen-back{padding:8px 9px;font-size:11px}.studio-fullscreen-identity{font-size:10px}}
