@@ -10,13 +10,14 @@ function downloadMedia(item:Preview){
     +(item.mime==='image/png'?'.png':item.mime==='image/jpeg'?'.jpg':'.webp');
   document.body.append(a);a.click();a.remove();
 }
-export default function SharedMediaSection({cards,blocked}:{cards:SharedCard[];blocked:boolean}){
+export default function SharedMediaSection({cards,blocked,onItemsChange}:{cards:SharedCard[];blocked:boolean;onItemsChange?:(items:MediaItem[])=>void}){
   const [items,setItems]=useState<MediaItem[]>([]);
   const [previews,setPreviews]=useState<Preview[]>([]);
   const [message,setMessage]=useState('');
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
   const refresh=async()=>{setItems(await listMedia());};
+  useEffect(()=>{onItemsChange?.(items);},[items,onItemsChange]);
   useEffect(()=>{let mounted=true;listMedia().then(v=>{if(mounted)setItems(v);}).catch(e=>{if(mounted)setError(String(e));});return()=>{mounted=false;};},[]);
   useEffect(()=>{
     const next=items.slice(0,24).map(item=>({
