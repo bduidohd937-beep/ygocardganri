@@ -7,6 +7,8 @@ export const SNAPSHOT_FORMAT='YGO_STUDIO_SNAPSHOT_V1';
 export const MAX_SNAPSHOT_BYTES=180*1024*1024;
 export const MAX_RECORD_BYTES=55*1024*1024;
 export const MAX_RECORDS=750;
+const MAX_MANIFEST_BYTES=1024*1024;
+const MAX_ZIP_ENTRIES=1+MAX_RECORDS*5;
 export const SNAPSHOT_DATASETS=[
   {id:'studio',label:'스튜디오 카드 원장',db:'ygo_card_studio',store:'workspace',keyPath:null,local:null},
   {id:'cardmaker',label:'카드 렌더러 · 일러스트',db:'duelmind-card-studio',store:'projects',keyPath:null,local:null},
@@ -178,27 +180,86 @@ export async function createSnapshot():Promise<{file:Blob;manifest:SnapshotManif
 function validManifest(raw:unknown):raw is SnapshotManifest{
   return object(raw)&&raw.format===SNAPSHOT_FORMAT&&Array.isArray(raw.records)&&Array.isArray(raw.blobs)
     &&raw.records.length>0&&raw.records.length<=MAX_RECORDS&&raw.blobs.length<=MAX_RECORDS*4
-    &&raw.records.every(r=>object(r)&&DSET.has(String(r.dataset))&&typeof r.key==='string'&&r.key.length<=200
+    &&raw.records.every(r=>object(r)&&DSET.has(String(r.dataset))&&typeof r.key==='string'&&r.key.length>0&&r.key.length<=200&&!r.key.includes('\u0000')
       &&typeof r.path==='string'&&/^records\/\d{5}\.json$/.test(r.path)&&typeof r.sha256==='string'&&/^[0-9a-f]{64}$/.test(r.sha256)
       &&typeof r.bytes==='number'&&Number.isInteger(r.bytes)&&r.bytes>=0&&r.bytes<=MAX_RECORD_BYTES)
     &&raw.blobs.every(b=>object(b)&&typeof b.path==='string'&&/^blobs\/\d{5}\.bin$/.test(b.path)
       &&typeof b.sha256==='string'&&/^[0-9a-f]{64}$/.test(b.sha256)&&typeof b.type==='string'
       &&typeof b.bytes==='number'&&Number.isInteger(b.bytes)&&b.bytes>=0&&b.bytes<=MAX_RECORD_BYTES);
 }
+/**
+ * JSZip's checkCRC32 option decompresses ALL entries during load, before our
+ * manifest budget is known. Never enable it for untrusted user-provided ZIPs.
+ * Validate ZIP metadata first and bound every streaming inflation instead.
+ */
+function preflightZip(zip:JSZip):void{
+  const entries=Object.entries(zip.files).filter(([,entry])=>!entry.dir);
+  if(entries.length===0||entries.length>MAX_ZIP_ENTRIES)throw Error('ZIP 파일 항목 수 제한을 초과했습니다.');
+  let sum=0;
+  for(const [path,entry] of entries){
+    const data=(entry as unknown as {_data?:{uncompressedSize?:unknown;compressedSize?:unknown}})._data;
+    const unpacked=data?.uncompressedSize,packed=data?.compressedSize;
+    const perFile=path==='백업목록.json'?MAX_MANIFEST_BYTES:MAX_RECORD_BYTES;
+    if(typeof unpacked!=='number'||!Number.isSafeInteger(unpacked)||unpacked<0
+      ||typeof packed!=='number'||!Number.isSafeInteger(packed)||packed<0)
+      throw Error('ZIP 압축 크기 정보를 검증할 수 없습니다.');
+    if(unpacked>perFile)throw Error('ZIP 항목의 압축 해제 예상 크기가 제한을 초과했습니다: '+path);
+    sum+=unpacked;
+    if(sum>MAX_SNAPSHOT_BYTES+MAX_MANIFEST_BYTES)throw Error('ZIP 압축 해제 총용량 제한을 초과했습니다.');
+  }
+}
+function inflateBounded(entry:JSZip.JSZipObject,limit:number):Promise<Uint8Array>{
+  return new Promise((resolve,reject)=>{
+    const chunks:Uint8Array[]=[];
+    let total=0,finished=false;
+    const stream=entry.internalStream('uint8array');
+    const fail=(error:unknown)=>{
+      if(finished)return;
+      finished=true;
+      stream.pause();
+      reject(error);
+    };
+    stream.on('data',(chunk:Uint8Array)=>{
+      if(finished)return;
+      total+=chunk.byteLength;
+      if(total>limit){fail(Error('ZIP 항목의 실제 압축 해제 크기가 제한을 초과했습니다.'));return;}
+      chunks.push(chunk);
+    });
+    stream.on('error',(error:Error)=>fail(error));
+    stream.on('end',()=>{
+      if(finished)return;
+      finished=true;
+      const result=new Uint8Array(total);
+      let offset=0;
+      for(const chunk of chunks){result.set(chunk,offset);offset+=chunk.byteLength;}
+      resolve(result);
+    });
+    stream.resume();
+  });
+}
 export async function inspectSnapshot(file:File):Promise<PackedSnapshot>{
   requireBudget(file.size,MAX_SNAPSHOT_BYTES,'ZIP 파일');
-  const zip=await JSZip.loadAsync(file,{checkCRC32:true});
-  const manifestText=await zip.file('백업목록.json')?.async('string');
-  if(!manifestText||manifestText.length>1024*1024)throw Error('백업목록.json이 없거나 너무 큽니다.');
+  // Loading metadata only avoids unbounded CRC pre-inflation.
+  const zip=await JSZip.loadAsync(file);
+  preflightZip(zip);
+  const manifestFile=zip.file('백업목록.json');
+  const manifestText=manifestFile?decode(await inflateBounded(manifestFile,MAX_MANIFEST_BYTES)):null;
+  if(!manifestText)throw Error('백업목록.json이 없거나 너무 큽니다.');
   const manifest:unknown=JSON.parse(manifestText);
-  if(!validManifest(manifest))throw Error('YGO STUDIO V2.7 통합 백업 형식이 아닙니다.');
+  if(!validManifest(manifest))throw Error('YGO STUDIO 통합 백업 형식이 아닙니다.');
   const allPaths=['백업목록.json',...manifest.records.map(x=>x.path),...manifest.blobs.map(x=>x.path)];
   if(new Set(allPaths).size!==allPaths.length)throw Error('백업 파일 경로가 중복됐습니다.');
+  // Distinct ZIP paths can still try to restore the same dataset+key twice.
+  const logicalKeys=manifest.records.map(x=>x.dataset+'\\u0000'+x.key);
+  if(new Set(logicalKeys).size!==logicalKeys.length)throw Error('백업의 저장 키가 중복됐습니다.');
   if(Object.keys(zip.files).some(path=>!allPaths.includes(path)&&!path.endsWith('/')))throw Error('등록되지 않은 파일이 들어 있는 ZIP입니다.');
+  if(zip.files && allPaths.some(path=>!zip.file(path)))throw Error('등록된 백업 파일이 누락됐습니다.');
   let total=0;
   const getVerified=async(item:{path:string;sha256:string;bytes:number})=>{
-    const raw=await zip.file(item.path)?.async('uint8array');
-    if(!raw||raw.byteLength!==item.bytes||await sha256(raw)!==item.sha256)throw Error('SHA-256 검증 실패: '+item.path);
+    const entry=zip.file(item.path);
+    if(!entry)throw Error('등록된 백업 파일이 누락됐습니다: '+item.path);
+    const raw=await inflateBounded(entry,Math.min(item.bytes,MAX_RECORD_BYTES));
+    if(raw.byteLength!==item.bytes||await sha256(raw)!==item.sha256)throw Error('SHA-256 검증 실패: '+item.path);
     total+=raw.byteLength;requireBudget(total,MAX_SNAPSHOT_BYTES,'백업 해제 내용');
     return raw;
   };
@@ -213,6 +274,8 @@ export async function inspectSnapshot(file:File):Promise<PackedSnapshot>{
     if(def.local&&entry.key!==def.local)throw Error('허용되지 않은 localStorage 키입니다.');
     const value=await decodeValue(raw.value,contents,used);
     if(!validateValue(entry.dataset,value))throw Error(def.label+' 데이터 형식이 유효하지 않습니다.');
+    if(def.keyPath&&(!object(value)||String(value[def.keyPath])!==entry.key))
+      throw Error(def.label+' 원본 키가 일치하지 않습니다.');
     values.push({dataset:entry.dataset,key:entry.key,value});
   }
   if(used.size!==contents.size)throw Error('사용되지 않은 바이너리 항목이 있어 복원을 차단했습니다.');
@@ -242,7 +305,8 @@ export async function previewRestore(snapshot:PackedSnapshot):Promise<RestorePre
 async function openForRestore(def:Dataset):Promise<IDBDatabase>{
   if(!def.db||!def.store)throw Error('데이터베이스 정의 오류');
   return new Promise((resolve,reject)=>{
-    const request=indexedDB.open(def.db,1);
+    // Never force version 1: an existing workspace may have upgraded its schema.
+    const request=indexedDB.open(def.db);
     request.onupgradeneeded=()=>{
       const db=request.result;
       if(!db.objectStoreNames.contains(def.store!))db.createObjectStore(def.store!,def.keyPath?{keyPath:def.keyPath}:undefined);
