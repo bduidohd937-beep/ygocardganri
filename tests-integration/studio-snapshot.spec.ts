@@ -95,28 +95,23 @@ test('V2.7: 무결성 불일치 ZIP 복원을 차단하고 기존 공통 카드 
 });
 
 
-test('V2.7.1: ZIP 중앙 디렉터리에 과대 압축 해제 크기가 선언되면 미리보기도 열지 않음',async({page})=>{
+test('V2.7.1: 56 MiB를 고압축한 ZIP 항목을 실제 해제 전에 차단',async({page})=>{
   await openBackup(page);await setup(page);
   const outgoing=page.waitForEvent('download');
   await page.getByRole('button',{name:'현재 통합 자료 ZIP 다운로드'}).click();
   const download=await outgoing;
-  const bytes=Buffer.from(await readFile(await download.path()!));
-  let patched=false;
-  for(let pos=0;pos+46<=bytes.length;pos++){
-    if(bytes.readUInt32LE(pos)!==0x02014b50)continue;
-    const length=bytes.readUInt16LE(pos+28);
-    const name=bytes.subarray(pos+46,pos+46+length).toString('utf8');
-    if(name.startsWith('records/')){
-      bytes.writeUInt32LE(60*1024*1024,pos+24);
-      patched=true;break;
-    }
-  }
-  expect(patched).toBe(true);
-  // Download can fire before React clears the export busy flag; wait until
-  // the import action is enabled so the malicious file is actually inspected.
+  const original=await readFile(await download.path()!);
+  const zip=await JSZip.loadAsync(original);
+  // A genuine compressed bomb fixture: tiny ZIP on disk, >55 MiB after inflate.
+  // This entry is deliberately not registered in the manifest.
+  zip.file('records/09998.json',new Uint8Array(56*1024*1024));
+  const bytes=await zip.generateAsync({
+    type:'nodebuffer',compression:'DEFLATE',compressionOptions:{level:1}
+  });
+  expect(bytes.length).toBeLessThan(1024*1024);
   await expect(page.getByRole('button',{name:'통합 백업 ZIP 검사·복원'})).toBeEnabled();
   await page.getByLabel('YGO STUDIO 통합 백업 ZIP').setInputFiles({
-    name:'압축폭탄_조작.zip',mimeType:'application/zip',buffer:bytes
+    name:'고압축_공격.zip',mimeType:'application/zip',buffer:bytes
   });
   await expect(page.getByRole('alert')).toContainText('압축 해제 예상 크기');
   await expect(page.getByRole('region',{name:'복원 미리보기'})).toHaveCount(0);
