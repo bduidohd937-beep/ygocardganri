@@ -47,7 +47,7 @@ jobs:
       - name: 네 개 독립 모듈 검수 및 묶음 생성
         run: bash scripts/assemble-integration.sh
       - name: Chromium 통합 UI E2E
-        run: npx playwright test tests-e2e/integration.spec.ts
+        run: npx playwright test --config playwright.integration.config.ts
         env:
           GITHUB_PAGES: 'true'
       - name: 통합 산출물 백업 (미배포)
