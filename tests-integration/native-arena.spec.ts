@@ -33,8 +33,10 @@ test('V2.6: 기록 JSON 백업 및 localStorage 원본 키 보존, 복귀 후 �
   await arena.locator('[data-action="export-json"]').click();
   const download=await downloadPromise;
   expect(download.suggestedFilename()).toMatch(/PSH_AI_ARENA.*\.json$/);
-  const body=JSON.parse(await readFile(await download.path()!, 'utf8')) as {state?:{issues?:Array<{id:string}>};schemaVersion?:number;issues?:Array<{id:string}>};
-  expect(body.schemaVersion??body.state?.issues?.length).toBeTruthy();
+  const body=JSON.parse(await readFile(await download.path()!, 'utf8')) as {schemaVersion:number;data:{issues:Array<{id:string}>;sessions:Array<{completedGames:number}>}};
+  expect(body.schemaVersion).toBe(1);
+  expect(body.data.issues.some(x=>x.id==='ISSUE-001')).toBe(true);
+  expect(body.data.sessions[0].completedGames).toBe(0);
 
   page.on('dialog',dialog=>void dialog.accept());
   await arena.locator('[data-action="reset"]').click();
