@@ -6,7 +6,7 @@ export type MediaImportResult={added:number;duplicate:number;unmatched:number;in
 
 async function openMedia():Promise<IDBDatabase>{
   return new Promise((resolve,reject)=>{
-    const r=indexedDB.open(MEDIA_DATABASE,1);
+    const r=indexedDB.open(MEDIA_DATABASE);
     r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('images'))r.result.createObjectStore('images',{keyPath:'id'});};
     r.onsuccess=()=>resolve(r.result);
     r.onerror=()=>reject(r.error||Error('공통 이미지 보관함을 열지 못했습니다.'));
@@ -26,7 +26,7 @@ export async function listMedia():Promise<MediaItem[]>{
 async function readMaker():Promise<Array<{id:unknown;name:unknown;artwork:unknown}>>{
   if(typeof indexedDB.databases==='function'&&!(await indexedDB.databases()).some(x=>x.name==='duelmind-card-studio'))return [];
   const db=await new Promise<IDBDatabase>((resolve,reject)=>{
-    const r=indexedDB.open('duelmind-card-studio',1);
+    const r=indexedDB.open('duelmind-card-studio');
     r.onupgradeneeded=()=>r.transaction?.abort();
     r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error||Error('카드 렌더러 저장소 접근 실패'));
   });
