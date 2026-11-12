@@ -72,7 +72,17 @@ export default function IntegrationModule({ moduleId }: { moduleId: IntegrationK
       }else if(moduleId==='cardmaker'){
         const input=doc.querySelector<HTMLInputElement>('input[aria-label="카드 데이터 파일"]');
         if(!input)throw Error('카드 렌더러 데이터 가져오기 UI가 없습니다.');
-        const existing=await currentMakerIds();
+        // CARD MAKER is React + IndexedDB with a 500ms debounced initial save.
+        // Wait for its first actual saved project before comparing IDs, never assume an empty DB.
+        let existing:Set<string>|null=null;
+        for(let attempt=0;attempt<15;attempt++){
+          try{existing=await currentMakerIds();break;}
+          catch(err){
+            if(attempt===14)throw err;
+            await new Promise<void>(resolve=>window.setTimeout(resolve,200));
+          }
+        }
+        if(!existing)throw Error('카드 렌더러의 기존 카드 상태를 확인하지 못했습니다.');
         const newCards:SharedCard[]=handoff.cards.filter(c=>!existing.has(c.id));
         if(!newCards.length)throw Error('카드 렌더러에 이미 같은 ID가 있습니다. 기존 데이터는 건드리지 않았습니다.');
         const payload=cardMakerPayload(newCards);
