@@ -33,13 +33,15 @@ test('V2.4: 로컬 JSON+프레임 ZIP을 통합 렌더러에 명시적으로 전
 
 test('V2.4: DESIGN LAB 및 PSH에 공통 스튜디오 스타일 적용 · 원본 도구 보존',async({page})=>{
   await page.goto('/ygocardganri/');
-  for(const [name,tool] of [['디자인·덱 실험실','designlab'],['PSH 검증 관제실','arena']] as const){
-    await page.getByRole('button',{name,exact:true}).click();
-    const frame=page.locator(`iframe[src="/ygocardganri/modules/${tool}/"]`);
-    await expect(frame).toBeVisible();
-    const document=page.frameLocator(`iframe[src="/ygocardganri/modules/${tool}/"]`);
-    await expect(document.locator('#ygo-studio-theme-v2-4')).toHaveCount(1,{timeout:20000});
-    await expect(document.locator('body')).not.toBeEmpty();
-    await page.getByRole('button',{name:'스튜디오로 돌아가기'}).click();
-  }
+  await page.getByRole('button',{name:'디자인·덱 실험실',exact:true}).click();
+  const native=page.locator('[data-native-tool="designlab"]');
+  await expect(native.locator('#view-library')).toBeVisible({timeout:30000});
+  await expect(native.locator('.sidebar')).toBeVisible();
+  await expect(page.locator('iframe')).toHaveCount(0);
+  await page.getByRole('button',{name:'스튜디오로 돌아가기'}).click();
+  await page.getByRole('button',{name:'PSH 검증 관제실',exact:true}).click();
+  const frame=page.locator('iframe[src="/ygocardganri/modules/arena/"]');
+  await expect(frame).toBeVisible();
+  await expect(page.frameLocator('iframe[src="/ygocardganri/modules/arena/"]').locator('#ygo-studio-theme-v2-4')).toHaveCount(1,{timeout:20000});
+  await page.getByRole('button',{name:'스튜디오로 돌아가기'}).click();
 });

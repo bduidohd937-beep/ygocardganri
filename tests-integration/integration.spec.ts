@@ -42,18 +42,21 @@ test('V2.3: 네 작업실을 한 사이트의 전체 화면으로 전환하고 �
   await expect(page.locator('iframe')).toHaveCount(0);
   await close();
 
-  for(const item of [
-    {name:'디자인·덱 실험실',path:'designlab',content:'DESIGN LAB'},
-    {name:'PSH 검증 관제실',path:'arena',content:'MSG16 응답 이후'}
-  ]){
-    await open(item.name);
-    const frame=page.locator(`iframe[title="${item.name}"]`);
-    await expect(frame).toHaveAttribute('src',`/ygocardganri/modules/${item.path}/`);
-    await expect(page.frameLocator(`iframe[title="${item.name}"]`).locator('body')).toContainText(item.content,{timeout:20000});
-    const box=await frame.boundingBox();
-    expect(box?.width).toBeGreaterThanOrEqual(viewport.width-1);
-    await close();
-  }
+  await open('디자인·덱 실험실');
+  const nativeLab=page.locator('[data-native-tool="designlab"]');
+  await expect(nativeLab).toBeVisible();
+  await expect(nativeLab.locator('#view-library')).toBeVisible({timeout:30000});
+  await expect(nativeLab.locator('#assets-open')).toBeVisible();
+  await expect(page.locator('iframe')).toHaveCount(0);
+  await close();
+
+  await open('PSH 검증 관제실');
+  const frame=page.locator('iframe[title="PSH 검증 관제실"]');
+  await expect(frame).toHaveAttribute('src','/ygocardganri/modules/arena/');
+  await expect(page.frameLocator('iframe[title="PSH 검증 관제실"]').locator('body')).toContainText('MSG16 응답 이후',{timeout:20000});
+  const box=await frame.boundingBox();
+  expect(box?.width).toBeGreaterThanOrEqual(viewport.width-1);
+  await close();
 });
 
 test('V2.3: 공통 보관함에서 진입한 뒤에는 해당 화면으로 돌아온다',async({page})=>{
