@@ -130,7 +130,7 @@ test('P6: imported YDK → saved study → manual EDOPro result and .yrpX eviden
     {name:'경기장_묶음.zip',mimeType:'application/zip',buffer:zipBytes},
   ]);
   await expect(intake.locator('.testlab-entry')).toHaveCount(2);
-  await expect(intake.locator('.testlab-entry')).toContainText('ZIP 파일 목록');
+  await expect(intake.locator('.testlab-entry').first()).toContainText('ZIP 파일 목록');
   await expect(restored.locator('.testlab-stats>div').nth(2)).toContainText('1건');
 
   await page.reload();
