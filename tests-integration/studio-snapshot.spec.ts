@@ -112,6 +112,9 @@ test('V2.7.1: ZIP 중앙 디렉터리에 과대 압축 해제 크기가 선언�
     }
   }
   expect(patched).toBe(true);
+  // Download can fire before React clears the export busy flag; wait until
+  // the import action is enabled so the malicious file is actually inspected.
+  await expect(page.getByRole('button',{name:'통합 백업 ZIP 검사·복원'})).toBeEnabled();
   await page.getByLabel('YGO STUDIO 통합 백업 ZIP').setInputFiles({
     name:'압축폭탄_조작.zip',mimeType:'application/zip',buffer:bytes
   });
