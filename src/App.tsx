@@ -26,6 +26,7 @@ import AuditCenter from './AuditCenter';
 import './fullscreen-workspace.css';
 import { applyStudioThemeToFrame } from './studioTheme';
 const NativeWorkspace=lazy(()=>import('./NativeWorkspace'));
+const NativeDesignLab=lazy(()=>import('./NativeDesignLab'));
 
 import SharedLibrary from './SharedLibrary';
 const MigrationCenter=lazy(()=>import('./MigrationCenter'));
@@ -306,10 +307,11 @@ export default function App(){
       </header>
       <main className="studio-fullscreen-stage" aria-label={toolName}>
         {target?<Suspense fallback={<div className="studio-fullscreen-loading">작업실을 불러오는 중...</div>}><NativeWorkspace target={target} fullscreen/></Suspense>:
+          page==='designlab'?<Suspense fallback={<div className="studio-fullscreen-loading">DESIGN LAB을 불러오는 중...</div>}><NativeDesignLab/></Suspense>:
           <iframe className="studio-fullscreen-legacy" title={toolName}
-            src={base+'modules/'+(page==='designlab'?'designlab':'arena')+'/'}
+            src={base+'modules/arena/'}
             referrerPolicy="no-referrer"
-            onLoad={event=>applyStudioThemeToFrame(event.currentTarget,page==='designlab'?'designlab':'arena')} />}
+            onLoad={event=>applyStudioThemeToFrame(event.currentTarget,'arena')} />}
       </main>
     </div>;
   }
