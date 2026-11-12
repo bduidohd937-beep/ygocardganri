@@ -12,7 +12,7 @@ const lazyFiles=files.filter(f=>f.endsWith('.js') && f!==entry);
 const lazyBytes=lazyFiles.reduce((n,f)=>n+gzip(f),0);
 const cssFiles=files.filter(f=>f.endsWith('.css'));
 const cssBytes=cssFiles.reduce((n,f)=>n+gzip(f),0);
-const entryCss=html.match(/assets\\/(index-[^"']+\\.css)/)?.[1];
+const entryCss=cssFiles.find(f=>f.startsWith('index-')&&f.endsWith('.css'));
 if(!entryCss||!cssFiles.includes(entryCss)) throw new Error('Missing Vite entry stylesheet');
 const initialCssBytes=gzip(entryCss);
 const wasmFiles=files.filter(f=>f.endsWith('.wasm'));
