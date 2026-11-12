@@ -18,6 +18,6 @@ test('YGO STUDIO 통합 메뉴에서 4개 정적 모듈을 불러온다', async 
     await expect(page.frameLocator(`iframe[title="${module.title}"]`).locator('body')).toContainText(
       module.text, { timeout: 20000 },
     );
-    await expect(page.getByText('데이터 자동 동기화 및 프로젝트 사이의 승인/검증 상태 공유는 아직 구현되지 않았습니다.', { exact: false })).toBeVisible();
+    await expect(page.getByText('수정 사항이 다른 도구로 자동 동기화되지는 않습니다.', { exact: false })).toBeVisible();
   }
 });
