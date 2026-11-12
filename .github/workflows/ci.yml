@@ -25,5 +25,7 @@ jobs:
           GITHUB_PAGES: 'true'
 
       - run: npm run check:bundle
+      # Rebuild under root base for localhost; prior build verifies actual GitHub Pages assets.
+      - run: npm run build
       - run: google-chrome --version
       - run: npm run test:e2e
