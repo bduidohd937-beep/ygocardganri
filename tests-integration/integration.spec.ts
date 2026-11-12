@@ -13,7 +13,7 @@ test('YGO STUDIO: 카드 제작 두 도구는 iframe 없이 네이티브로 실�
   await page.getByRole('button',{name:'카드 렌더러',exact:true}).click();
   const maker=page.locator('[data-native-tool="cardmaker"]');
   await expect(maker).toBeVisible();
-  await expect(maker.locator('select option[value="token"]')).toHaveCount(1,{timeout:30000});
+  await expect.poll(()=>maker.evaluate(el=>el.shadowRoot?.querySelectorAll('select option[value="token"]').length??0),{timeout:30000}).toBe(1);
   await expect(page.locator('iframe[title="카드 렌더러"]')).toHaveCount(0);
 
   for(const item of [
