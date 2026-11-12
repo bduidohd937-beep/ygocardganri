@@ -250,7 +250,7 @@ export async function inspectSnapshot(file:File):Promise<PackedSnapshot>{
   const allPaths=['백업목록.json',...manifest.records.map(x=>x.path),...manifest.blobs.map(x=>x.path)];
   if(new Set(allPaths).size!==allPaths.length)throw Error('백업 파일 경로가 중복됐습니다.');
   // Distinct ZIP paths can still try to restore the same dataset+key twice.
-  const logicalKeys=manifest.records.map(x=>x.dataset+'\\u0000'+x.key);
+  const logicalKeys=manifest.records.map(x=>JSON.stringify([x.dataset,x.key]));
   if(new Set(logicalKeys).size!==logicalKeys.length)throw Error('백업의 저장 키가 중복됐습니다.');
   if(Object.keys(zip.files).some(path=>!allPaths.includes(path)&&!path.endsWith('/')))throw Error('등록되지 않은 파일이 들어 있는 ZIP입니다.');
   if(zip.files && allPaths.some(path=>!zip.file(path)))throw Error('등록된 백업 파일이 누락됐습니다.');
@@ -258,7 +258,7 @@ export async function inspectSnapshot(file:File):Promise<PackedSnapshot>{
   const getVerified=async(item:{path:string;sha256:string;bytes:number})=>{
     const entry=zip.file(item.path);
     if(!entry)throw Error('등록된 백업 파일이 누락됐습니다: '+item.path);
-    const raw=await inflateBounded(entry,Math.min(item.bytes,MAX_RECORD_BYTES));
+    const raw=await inflateBounded(entry,Math.min(MAX_RECORD_BYTES,MAX_SNAPSHOT_BYTES-total));
     if(raw.byteLength!==item.bytes||await sha256(raw)!==item.sha256)throw Error('SHA-256 검증 실패: '+item.path);
     total+=raw.byteLength;requireBudget(total,MAX_SNAPSHOT_BYTES,'백업 해제 내용');
     return raw;
