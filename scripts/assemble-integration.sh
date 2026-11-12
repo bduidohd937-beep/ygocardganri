@@ -29,6 +29,8 @@ cp "$source_root/arena/index.html" dist/modules/arena/
 # Same-origin native workspaces: no iframe/secondary application chrome.
 test -s "$source_root/cardmaker/dist/embed/cardmaker.js"
 python3 scripts/build-native-artlab.py
+node scripts/build-native-designlab.mjs
+cp node_modules/sql.js/dist/sql-wasm.wasm dist/modules/designlab/sql-wasm.wasm
 
 for path in dist/modules/{artlab,designlab,cardmaker,arena}/index.html; do
   test -s "$path" || { echo "::error::통합 모듈 진입점 누락: $path"; exit 1; }
@@ -38,6 +40,8 @@ test -s dist/modules/artlab/asset-engine-native.js
 test -s dist/modules/artlab/native.js
 test -s dist/modules/cardmaker/embed/cardmaker.js
 test -s dist/modules/designlab/src/main.js
+test -s dist/modules/designlab/native-designlab.js
+test -s dist/modules/designlab/sql-wasm.wasm
 test -d dist/modules/cardmaker/assets
 test -s dist/modules/arena/index.html
 echo "[통합] 모듈 네 종류 파일 생성 확인 (런타임 브라우저 E2E는 별도)"
