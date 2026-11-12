@@ -13,8 +13,10 @@ test('UI V2: YGO STUDIO 메인과 바로가기, 카테고리 접기 및 최근 �
   await research.click();
   await expect(research).toHaveAttribute('aria-expanded','true');
   await page.locator('.sidebar .nav-link').filter({hasText:'이미지 연구소'}).click();
-  await expect(page.getByRole('heading',{name:'이미지 연구소'})).toBeVisible();
-  await page.locator('.sidebar .nav-link').filter({hasText:'대시보드'}).click();
+  await expect(page.locator('[data-fullscreen-workspace="artlab"]')).toBeVisible();
+  await expect(page.locator('.sidebar')).toHaveCount(0);
+  await page.getByRole('button',{name:'스튜디오로 돌아가기'}).click();
+  await expect(page.getByRole('heading',{name:'YGO STUDIO'})).toBeVisible();
   await expect(page.getByText('이미지 연구소',{exact:true}).last()).toBeVisible();
   await page.getByRole('button',{name:'메뉴 접기'}).click();
   await expect(page.locator('.sidebar')).toHaveClass(/sidebar--compact/);
