@@ -208,11 +208,20 @@ function preflightZip(zip:JSZip):void{
     if(sum>MAX_SNAPSHOT_BYTES+MAX_MANIFEST_BYTES)throw Error('ZIP 압축 해제 총용량 제한을 초과했습니다.');
   }
 }
+// JSZip exposes internalStream at runtime but @types/jszip omits this helper.
+// Keep the compatibility assertion confined here so no other code depends on it.
+type BoundedZipStream={
+  on(event:'data',handler:(chunk:Uint8Array)=>void):BoundedZipStream;
+  on(event:'error',handler:(error:Error)=>void):BoundedZipStream;
+  on(event:'end',handler:()=>void):BoundedZipStream;
+  pause():void;
+  resume():void;
+};
 function inflateBounded(entry:JSZip.JSZipObject,limit:number):Promise<Uint8Array>{
   return new Promise((resolve,reject)=>{
     const chunks:Uint8Array[]=[];
     let total=0,finished=false;
-    const stream=entry.internalStream('uint8array');
+    const stream=(entry as unknown as {internalStream:(type:'uint8array')=>BoundedZipStream}).internalStream('uint8array');
     const fail=(error:unknown)=>{
       if(finished)return;
       finished=true;
