@@ -4,6 +4,7 @@ import {
   parseYdk, toYdk, validateCatalog, validCardId
 } from './sharedCatalog';
 import type { Handoff, ImportCandidate, SharedCatalog, SharedDeck } from './sharedCatalog';
+import SharedMediaSection from './SharedMediaSection';
 import './shared-library.css';
 
 const MAX_UPLOAD=3*1024*1024;
@@ -166,7 +167,8 @@ export default function SharedLibrary({onOpenModule,initialFilter=''}:Props){
       <div><strong>{catalog.decks.length}</strong><span>등록한 YDK 덱</span></div>
       <div><strong>{visibleSelection.length}</strong><span>전송 선택 카드</span></div>
     </div>
-    <div className="shared-warning" role="note"><strong>데이터 이전은 보수적으로 처리합니다.</strong> 기존 사이트와 통합 사이트의 저장공간은 다릅니다. 이 기능은 카드명·ID·테마·효과 메타데이터와 YDK 구성만 다루며 이미지/EDOPro 원본, 승인 결과를 가져오거나 복원하지 않습니다. 동일 ID의 다른 원문은 충돌로 남기고 자동 덮어쓰지 않습니다.</div>
+    <div className="shared-warning" role="note"><strong>데이터 이전은 보수적으로 처리합니다.</strong> 기존 사이트와 통합 사이트의 저장공간은 다릅니다. 카드·덱 메타는 ID 기준으로 안전하게 관리하고, 이미지 연결은 아래 공통 이미지 보관함에 별도 복사합니다. 원본 EDOPro·CDB·Lua 및 승인·검증 결과는 변경하지 않으며, 동일 카드 ID의 다른 원문은 충돌로 남겨 덮어쓰지 않습니다.</div>
+    <SharedMediaSection cards={catalog.cards} blocked={!!blocked}/>
     {blocked&&<div className="shared-error" role="alert">{blocked}</div>}
     {message&&<div className="shared-message" role="status">{message}</div>}
     <section className="shared-panel">
