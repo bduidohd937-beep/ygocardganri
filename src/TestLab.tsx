@@ -1,10 +1,10 @@
 import { useEffect,useMemo,useRef,useState } from 'react';
-import { AlertTriangle,Download,Save,Trash2 } from 'lucide-react';
+import { AlertTriangle,Download,Save,Trash2,Upload } from 'lucide-react';
 import type { DeckStudy } from './deckMath';
 import type { CombinationMetrics } from './combinationMath';
 import { assessDuelHand,DUEL_OUTCOMES,parseHand,reportedSummary,SHUFFLE_MODES,snapshotSha256,validateHand,validateEvidenceBackup } from './duelEvidence';
 import type { DuelEvidenceRecord,DuelOutcome,ReplayEvidence,ShuffleMode } from './duelEvidence';
-import { getReplayEvidence,listDuelEvidence,removeDuelEvidence,storeDuelEvidence } from './duelEvidenceVault';
+import { getReplayEvidence,listDuelEvidence,mergeDuelEvidenceBackup,removeDuelEvidence,storeDuelEvidence } from './duelEvidenceVault';
 import './test-lab.css';
 
 type Props={study:DeckStudy;dirty:boolean;handSize:5|6};
@@ -32,6 +32,7 @@ export default function TestLab({study,dirty,handSize}:Props){
   const [busy,setBusy]=useState(false);
   const [theory,setTheory]=useState<{hash:string;hand:5|6;value:number|null}|null>(null);
   const fileRef=useRef<HTMLInputElement>(null);
+  const importRef=useRef<HTMLInputElement>(null);
 
   useEffect(()=>{
     let alive=true;
@@ -106,6 +107,21 @@ export default function TestLab({study,dirty,handSize}:Props){
     }catch(e){setError(e instanceof Error?e.message:'리플레이 읽기 실패');}
     finally{setBusy(false);}
   };
+  const restore=async(file:File|null)=>{
+    if(!file||busy)return;
+    setBusy(true);setError('');setStatus('');
+    try{
+      if(file.size>4*1024*1024)throw new Error('테스트 기록 JSON은 4MiB 이하만 가져올 수 있습니다.');
+      const payload:unknown=JSON.parse(await file.text());
+      if(!validateEvidenceBackup(payload))throw new Error('EDOPro 테스트 기록 JSON 백업 형식이 올바르지 않습니다.');
+      if(payload.records.some(r=>r.studyId!==study.id))
+        throw new Error('다른 분석안의 백업입니다. 해당 연구안에서 가져오세요.');
+      const merged=await mergeDuelEvidenceBackup(payload);
+      setRecords(await listDuelEvidence(study.id));
+      setStatus('복원 완료: 신규 '+merged.added+'건 · 기존과 동일 '+merged.unchanged+'건. 리플레이 바이너리는 복원되지 않았습니다.');
+    }catch(e){setError(e instanceof Error?e.message:'테스트 기록 JSON 복원 실패');}
+    finally{if(importRef.current)importRef.current.value='';setBusy(false);}
+  };
   const backup=()=>{
     const data={kind:'ygo_card_studio_edopro_evidence',schemaVersion:1,
       exportedAt:new Date().toISOString(),records} as const;
@@ -148,8 +164,12 @@ export default function TestLab({study,dirty,handSize}:Props){
     <div className="testlab-actions">
       <button type="button" className="primary-button" disabled={!canSave} onClick={()=>void submit()}>
         <Save size={14}/> 테스트 기록 저장</button>
-      <button type="button" className="outline-button" disabled={!records.length} onClick={backup}>
+      <button type="button" className="outline-button" disabled={!records.length||busy} onClick={backup}>
         <Download size={14}/> 기록 JSON 백업</button>
+      <button type="button" className="outline-button" disabled={busy} onClick={()=>importRef.current?.click()}>
+        <Upload size={14}/> 기록 JSON 복원(병합)</button>
+      <input ref={importRef} hidden type="file" accept=".json,application/json"
+        aria-label="EDOPro 테스트 기록 JSON 가져오기" onChange={e=>void restore(e.target.files?.[0]||null)}/>
       <small>연구안 리비전 {study.revision} · SHA256 {fingerprint?fingerprint.slice(0,12)+'…':'준비 중'}</small>
     </div>
     {error&&<p role="alert" className="testlab-error">{error}</p>}
@@ -168,7 +188,7 @@ export default function TestLab({study,dirty,handSize}:Props){
          <div className="testlab-entry-heading"><strong>{record.outcome}</strong><small>{new Date(record.recordedAt).toLocaleString('ko-KR')}</small>
           <em>{record.studyRevision===study.revision&&record.deckFingerprint===fingerprint?'현재 덱 버전':'다른 덱 버전 · 통계 제외'}</em></div>
          <p>{record.shuffleMode} · {record.handSize}장 · {record.hand.join(', ')}</p>
-         <p>이론상 루트: {record.assessment.eligible===null?'미설정':record.assessment.eligible?'충족':'미충족'} · 리플레이: {record.replay?'파일 첨부(미해석)':'없음'}</p>
+         <p>이론상 루트: {record.assessment.eligible===null?'미설정':record.assessment.eligible?'충족':'미충족'} · 리플레이: {record.replay?'파일 정보 기록(원본 보관 여부 미확인)':'없음'}</p>
          {record.note&&<p>관찰 메모: {record.note}</p>}
          {record.replay&&<p className="testlab-hash">{record.replay.filename} · SHA256 {record.replay.sha256.slice(0,16)}…</p>}
          <div className="testlab-entry-actions">
@@ -179,6 +199,6 @@ export default function TestLab({study,dirty,handSize}:Props){
          </div>
        </article>)}
     </div>
-    <p className="testlab-note">이 기능은 EDOPro 프로세스를 자동 실행하지 않아. 사용자 입력과 리플레이 파일 해시를 모아 검수하는 첫 연동 단계이며, 엔진 자동화 및 리플레이 해독은 후속 작업이야.</p>
+    <p className="testlab-note">JSON 복원은 기존 기록에 병합하며 기존 기록·리플레이 원본을 덮어쓰지 않아. JSON은 메타데이터만 포함하므로 복원된 리플레이 파일 정보는 실제 파일이 브라우저에 남아 있는지 확인해야 해. EDOPro 실행·리플레이 해독은 수행하지 않아.</p>
   </section>;
 }
