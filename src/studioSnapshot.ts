@@ -12,6 +12,7 @@ export const SNAPSHOT_DATASETS=[
   {id:'cardmaker',label:'카드 렌더러 · 일러스트',db:'duelmind-card-studio',store:'projects',keyPath:null,local:null},
   {id:'cardmaker-assets',label:'렌더러 프레임·폰트 리소스',db:'duelmind-card-studio-assets',store:'packs',keyPath:null,local:null},
   {id:'designlab-files',label:'DESIGN LAB 원본 파일',db:'유희왕_DESIGN_LAB_자료실',store:'files',keyPath:'id',local:null},
+  {id:'shared-media',label:'공통 카드 ID 연결 일러스트',db:'ygo-studio-shared-media-v1',store:'images',keyPath:'id',local:null},
   {id:'shared',label:'공통 카드·덱 보관함',db:null,store:null,keyPath:null,local:'ygo-studio-shared-catalog-v1'},
   {id:'artlab',label:'이미지 연구소 설정·카드 목록',db:null,store:null,keyPath:null,local:'ygo-art-lab-v1.1'},
   {id:'psh',label:'PSH 세션·검증 기록',db:null,store:null,keyPath:null,local:'psh-ai-arena-control-v1'},
@@ -97,6 +98,10 @@ function validateValue(dataset:DatasetId,value:unknown):boolean{
   }
   if(dataset==='designlab-files'){
     return object(value)&&typeof value.id==='string'&&typeof value.name==='string'&&typeof value.sha256==='string'&&value.blob instanceof Blob;
+  }
+  if(dataset==='shared-media'){
+    return object(value)&&typeof value.id==='string'&&typeof value.name==='string'&&typeof value.sha256==='string'&&value.blob instanceof Blob
+      &&typeof value.mime==='string'&&['image/png','image/jpeg','image/webp'].includes(value.mime)&&value.source==='cardmaker';
   }
   return false;
 }
