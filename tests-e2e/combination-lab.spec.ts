@@ -21,36 +21,23 @@ test('P5.1: A+B and alternative OR routes + brick risk persist in deck study wit
   await page.locator('.sidebar .nav-link').filter({hasText:'덱 연구실'}).click();
   await expect(page.locator('.decklab-shell')).toBeVisible();
   await page.getByRole('button',{name:'원본에서 새 분석안'}).click();
-  const combo=page.locator('.combo-shell:visible');
-  await expect(combo).toHaveCount(1);
-  await expect(combo).toBeVisible();
+  await expect(page.getByLabel('조합 초동 분석기')).toBeVisible();
   await expect(page.locator('.combo-pending')).toBeVisible();
 
-  await combo.locator('select[aria-label="새 루트 A 카드"]').selectOption('91008601');
-  await combo.getByRole('button',{name:'루트 추가'}).click();
-  await expect(combo.locator('.combo-route')).toHaveCount(1);
-  await combo.locator('.combo-route').first().locator('input[aria-label$=" B 그룹"]').fill('91008602');
-  await combo.locator('.combo-route').first().getByRole('button',{name:/조건 적용/}).click();
-  await expect(combo.locator('.combo-route').first()).toContainText('서로 다른 실제 카드 2장');
-  const allCombos=await page.evaluate(()=>({
-    combos:[...document.querySelectorAll('.combo-shell')].map((el,i)=>({
-      i,visible:!!(el as HTMLElement).getClientRects().length,
-      ancestor:(()=>{const chain:string[]=[];let p:Element|null=el;while(p&&chain.length<9){chain.push(p.tagName+'.'+p.className);p=p.parentElement;}return chain;})(),
-      selectCount:el.querySelectorAll('select[aria-label="새 루트 A 카드"]').length,
-      routes:el.querySelectorAll('.combo-route').length
-    })),
-    labs:document.querySelectorAll('.decklab-shell').length,
-    roots:document.querySelectorAll('#root').length
-  }));
-  console.log('[P6 COMBO DOM DIAGNOSTIC]',JSON.stringify(allCombos));
-  expect(allCombos.combos.filter(x=>x.visible)).toHaveLength(1);
+  await page.getByLabel('새 루트 A 카드').selectOption('91008601');
+  await page.getByRole('button',{name:'루트 추가'}).click();
+  await expect(page.locator('.combo-route')).toHaveCount(1);
+  await page.locator('.combo-route').first().locator('input[aria-label$=" B 그룹"]').fill('91008602');
+  await page.locator('.combo-route').first().getByRole('button',{name:/조건 적용/}).click();
+  await expect(page.locator('.combo-route').first()).toContainText('서로 다른 실제 카드 2장');
 
-  await combo.locator('select[aria-label="새 루트 A 카드"]').selectOption('91008603');
-  await combo.getByRole('button',{name:'루트 추가'}).click();
-  await expect(combo.locator('.combo-route')).toHaveCount(2);
+  await page.getByLabel('새 루트 A 카드').selectOption('91008603');
+  await page.getByRole('button',{name:'루트 추가'}).click();
+  await expect(page.locator('.combo-route')).toHaveCount(2);
+  const combo=page.getByLabel('조합 초동 분석기');
   await expect(combo.getByText('하나 이상의 루트 성립 (OR)')).toBeVisible();
   await expect(combo.locator('.combo-per-route>div')).toHaveCount(2);
-  await combo.getByLabel('조합 말림 카드 ID').fill('91008604');
+  await page.getByLabel('조합 말림 카드 ID').fill('91008604');
   await page.getByRole('button',{name:'위험 카드 적용'}).click();
   await expect(combo.getByText('루트 성립 + 말림 동반')).toBeVisible();
   await expect(combo.locator('.combo-result-grid')).toContainText('%');
@@ -61,9 +48,9 @@ test('P5.1: A+B and alternative OR routes + brick risk persist in deck study wit
   await expect(page.locator('.realm-tile')).toHaveCount(5);
   await page.locator('.sidebar .nav-link').filter({hasText:'덱 연구실'}).click();
   await page.getByLabel('저장된 분석안').selectOption({index:1});
-  await expect(combo.locator('.combo-route')).toHaveCount(2);
-  await expect(combo.locator('.combo-route').first().locator('input[aria-label$=" B 그룹"]')).toHaveValue('91008602');
-  await expect(combo.getByLabel('조합 말림 카드 ID')).toHaveValue('91008604');
+  await expect(page.locator('.combo-route')).toHaveCount(2);
+  await expect(page.locator('.combo-route').first().locator('input[aria-label$=" B 그룹"]')).toHaveValue('91008602');
+  await expect(page.getByLabel('조합 말림 카드 ID')).toHaveValue('91008604');
   await expect(page.getByText('루트 성립 + 말림 동반')).toBeVisible();
 
   await page.locator('.sidebar .nav-link').filter({hasText:'파일 센터'}).click();
