@@ -175,10 +175,10 @@ function validManifest(raw:unknown):raw is SnapshotManifest{
     &&raw.records.length>0&&raw.records.length<=MAX_RECORDS&&raw.blobs.length<=MAX_RECORDS*4
     &&raw.records.every(r=>object(r)&&DSET.has(String(r.dataset))&&typeof r.key==='string'&&r.key.length<=200
       &&typeof r.path==='string'&&/^records\/\d{5}\.json$/.test(r.path)&&typeof r.sha256==='string'&&/^[0-9a-f]{64}$/.test(r.sha256)
-      &&Number.isInteger(r.bytes)&&r.bytes>=0&&r.bytes<=MAX_RECORD_BYTES)
+      &&typeof r.bytes==='number'&&Number.isInteger(r.bytes)&&r.bytes>=0&&r.bytes<=MAX_RECORD_BYTES)
     &&raw.blobs.every(b=>object(b)&&typeof b.path==='string'&&/^blobs\/\d{5}\.bin$/.test(b.path)
       &&typeof b.sha256==='string'&&/^[0-9a-f]{64}$/.test(b.sha256)&&typeof b.type==='string'
-      &&Number.isInteger(b.bytes)&&b.bytes>=0&&b.bytes<=MAX_RECORD_BYTES);
+      &&typeof b.bytes==='number'&&Number.isInteger(b.bytes)&&b.bytes>=0&&b.bytes<=MAX_RECORD_BYTES);
 }
 export async function inspectSnapshot(file:File):Promise<PackedSnapshot>{
   requireBudget(file.size,MAX_SNAPSHOT_BYTES,'ZIP 파일');
