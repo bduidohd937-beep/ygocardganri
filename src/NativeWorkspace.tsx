@@ -93,7 +93,7 @@ async function loadAssetEngine(base:string):Promise<void>{
     document.head.appendChild(script);
   });
 }
-async function mountArtLab(host:HTMLElement,isCancelled:()=>boolean):Promise<Handle|null>{
+async function mountArtLab(host:HTMLElement,isCancelled:()=>boolean,fullscreen:boolean):Promise<Handle|null>{
   const base=baseUrl(),url=base+'modules/artlab/';
   const [htmlResponse,cssResponse]=await Promise.all([fetch(url+'index.html'),fetch(url+'styles.css')]);
   if(!htmlResponse.ok||!cssResponse.ok)throw Error('이미지 연구소 원본 자료를 불러오지 못했습니다.');
@@ -101,14 +101,21 @@ async function mountArtLab(host:HTMLElement,isCancelled:()=>boolean):Promise<Han
   const doc=new DOMParser().parseFromString(html,'text/html');
   const app=doc.querySelector('.shell'),toast=doc.getElementById('toast');
   if(!app||!toast||!doc.getElementById('art-canvas'))throw Error('원본 이미지 생성기 구조가 예상과 다릅니다.');
-  app.querySelector('.topbar')?.remove();
-  app.querySelector('.footer')?.remove();
+  if(!fullscreen){
+    app.querySelector('.topbar')?.remove();
+    app.querySelector('.footer')?.remove();
+  }else{
+    // Original ART LAB header/footer, including license attribution, remain visible.
+    app.querySelectorAll<HTMLAnchorElement>('.footer a[href^="assets/"]').forEach(anchor=>{
+      anchor.href=url+anchor.getAttribute('href');
+    });
+  }
   if(isCancelled())return null;
   const shadow=host.shadowRoot??host.attachShadow({mode:'open'});
   shadow.replaceChildren();
   const style=document.createElement('style');
   style.textContent=':host{display:block;min-width:0;--bg:#090c13;--panel:#111722;--border:#253041;--muted:#8592a9;--txt:#eaf0fc;--blue:#8dabff;--accent:#b5c6ff;--font:"Noto Sans KR",system-ui,sans-serif;color:#eaf0fc;font:13px/1.6 var(--font);background:#090c13;isolation:isolate}\n'
-    +css+'\n:host .shell{max-width:none;margin:0;padding:0 0 24px}:host .hero{padding-top:10px}:host .workspace{margin-top:13px}:host .ambient{display:none}';
+    +css+(fullscreen?'\n:host .shell{max-width:1510px;margin:0 auto;padding:0 34px 45px}:host .ambient{display:none}':'\n:host .shell{max-width:none;margin:0;padding:0 0 24px}:host .hero{padding-top:10px}:host .workspace{margin-top:13px}:host .ambient{display:none}');
   shadow.append(style,app,toast);
   await loadAssetEngine(base);
   if(isCancelled()){if(shadow.contains(app))shadow.replaceChildren();return null;}
@@ -117,14 +124,31 @@ async function mountArtLab(host:HTMLElement,isCancelled:()=>boolean):Promise<Han
   const cleanup=mod.mountArtLab(shadow);
   return {root:shadow,unmount:()=>{cleanup();if(shadow.contains(app))shadow.replaceChildren();}};
 }
-async function mountMaker(host:HTMLElement,isCancelled:()=>boolean):Promise<Handle|null>{
+async function mountMaker(host:HTMLElement,isCancelled:()=>boolean,fullscreen:boolean):Promise<Handle|null>{
   const mod:NativeModule=await import(/* @vite-ignore */ baseUrl()+'modules/cardmaker/embed/cardmaker.js');
   if(typeof mod.mountCardMaker!=='function')throw Error('카드 렌더러의 React 모듈이 없습니다.');
   if(isCancelled())return null;
-  return mod.mountCardMaker(host);
+  const instance=mod.mountCardMaker(host);
+  if(fullscreen){
+    // Restore the complete original DUELMIND header and three-column workspace.
+    // This style is scoped to its ShadowRoot and does not affect YGO STUDIO.
+    const style=document.createElement('style');
+    style.textContent=`
+      :host{height:100%;min-height:0}
+      :host #native-cardmaker-root{min-height:0;height:100%}
+      :host .topbar{height:76px;min-height:76px;flex-wrap:nowrap;padding:0 25px;gap:22px}
+      :host .topbar .brand{display:flex}
+      :host .topbar .workspace-label{display:flex}
+      :host .topbar .top-actions{margin-left:auto}
+      :host .workspace{height:calc(100dvh - 122px);min-height:500px}
+      @media(max-width:920px){:host .topbar{height:auto;min-height:76px;flex-wrap:wrap;padding:10px 16px}:host .topbar .workspace-label{display:none}}
+    `;
+    instance.root.appendChild(style);
+  }
+  return instance;
 }
 /** Native same-origin DOM workspaces. No iframe or nested application navigation. */
-export default function NativeWorkspace({target}:{target:Target}){
+export default function NativeWorkspace({target,fullscreen=false}:{target:Target;fullscreen?:boolean}){
   const host=useRef<HTMLDivElement|null>(null);
   const mounted=useRef<Handle|null>(null);
   const [ready,setReady]=useState(false);
@@ -137,13 +161,13 @@ export default function NativeWorkspace({target}:{target:Target}){
     setReady(false);setError('');setMessage('');setHandoff(savedHandoff(target));
     const container=host.current;
     if(!container)return;
-    (target==='artlab'?mountArtLab(container,()=>cancelled):mountMaker(container,()=>cancelled)).then(instance=>{
+    (target==='artlab'?mountArtLab(container,()=>cancelled,fullscreen):mountMaker(container,()=>cancelled,fullscreen)).then(instance=>{
       if(!instance)return;
       if(cancelled){instance.unmount();return;}
       mounted.current=instance;setReady(true);
     }).catch(e=>{if(!cancelled)setError('작업실 로딩 실패: '+String(e));});
     return ()=>{cancelled=true;mounted.current?.unmount();mounted.current=null;};
-  },[target]);
+  },[target,fullscreen]);
   const apply=async()=>{
     const data=handoff,instance=mounted.current;
     if(!ready||!data||!instance||busy)return;
@@ -156,11 +180,11 @@ export default function NativeWorkspace({target}:{target:Target}){
     finally{setBusy(false);}
   };
   const info=metadata[target];
-  return <section className="native-workspace" aria-label={info.title}>
-    <div className="native-workspace-header">
+  return <section className={`native-workspace ${fullscreen?'native-workspace--fullscreen':''}`} aria-label={info.title}>
+    {!fullscreen&&<div className="native-workspace-header">
       <div><span>YGO STUDIO · NATIVE WORKSPACE V2.2</span><h1>{info.title}</h1><p>{info.desc}</p></div>
       <div className="native-workspace-ok"><CheckCircle2 size={15}/> 한 화면에서 직접 실행</div>
-    </div>
+    </div>}
     {handoff&&<div className="native-workspace-handoff">
       <div><FileInput size={18}/><span>공통 보관함 선택 카드 <strong>{handoff.cards.length}장</strong> · 기존 카드 보존</span></div>
       <button disabled={!ready||busy} onClick={()=>void apply()}>{busy?'확인 중...':'선택 카드 신규만 가져오기'}</button>
@@ -169,8 +193,8 @@ export default function NativeWorkspace({target}:{target:Target}){
     {!!error&&<div className="native-workspace-error" role="alert">{error}</div>}
     {!ready&&!error&&<div className="native-workspace-loading"><Layers3 size={18}/> 원본 제작 엔진을 준비하는 중...</div>}
     <div ref={host} className="native-workspace-mount" data-native-tool={target}/>
-    <p className="native-workspace-foot">파일·카드 제작은 이 사이트 안에서 실행합니다. 기존 저장 데이터는 그대로 유지되며, 카드 효과 승인·EDOPro 대전 결과를 자동 갱신하지 않습니다.
+    {!fullscreen&&<p className="native-workspace-foot">파일·카드 제작은 이 사이트 안에서 실행합니다. 기존 저장 데이터는 그대로 유지되며, 카드 효과 승인·EDOPro 대전 결과를 자동 갱신하지 않습니다.
       {target==='artlab'&&<> · SVG 출처: Lorc / Delapouite (Game-icons, CC BY 3.0) · <a href={baseUrl()+'modules/artlab/assets/오픈에셋_출처와_라이선스.md'} target="_blank" rel="noopener noreferrer">저작자·라이선스 원문</a></>}
-    </p>
+    </p>}
   </section>;
 }
