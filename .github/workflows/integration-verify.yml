@@ -1,0 +1,54 @@
+name: YGO STUDIO 통합 모듈 검사
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  integration-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 통합 본체 의존성 설치
+        run: npm install --no-audit --no-fund
+      - name: 본체 타입·단위검사
+        run: npm run typecheck && npm test
+      - name: 본체 정적 빌드
+        run: npm run build
+        env:
+          GITHUB_PAGES: 'true'
+      - name: YGO ART LAB 소스 (스냅샷 고정)
+        uses: actions/checkout@v4
+        with:
+          repository: bduidohd937-beep/ygoimeagemaker
+          ref: bbe322542187a136545597f652a5d8be071e8642
+          path: .integration_sources/artlab
+      - name: CARD MAKER 소스 (main 스냅샷)
+        uses: actions/checkout@v4
+        with:
+          repository: bduidohd937-beep/ygocardmaker
+          ref: faca26872ce40676912c2d661c037c8780312d1f
+          path: .integration_sources/cardmaker
+      - name: DESIGN LAB 소스 (스냅샷 고정)
+        uses: actions/checkout@v4
+        with:
+          repository: bduidohd937-beep/YU-GI-OH-DESIGN-LAB
+          ref: 8682b594b331ae4b8922fd5009fa62ee66e1cd7b
+          path: .integration_sources/designlab
+      - name: PSH 검증 관제실 소스 (스냅샷 고정)
+        uses: actions/checkout@v4
+        with:
+          repository: bduidohd937-beep/PSH-AI-ARENA
+          ref: 1e22f657f4b9be08771953fb686a06f56a8faf9c
+          path: .integration_sources/arena
+      - name: 네 개 독립 모듈 검수 및 묶음 생성
+        run: bash scripts/assemble-integration.sh
+      - name: 통합 산출물 백업 (미배포)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ygo-studio-integration-preview
+          path: dist
+          if-no-files-found: error
