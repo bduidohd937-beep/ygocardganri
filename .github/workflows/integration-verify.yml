@@ -48,6 +48,8 @@ jobs:
         run: bash scripts/assemble-integration.sh
       - name: Chromium 통합 UI E2E
         run: npx playwright test tests-e2e/integration.spec.ts
+        env:
+          GITHUB_PAGES: 'true'
       - name: 통합 산출물 백업 (미배포)
         uses: actions/upload-artifact@v4
         with:
