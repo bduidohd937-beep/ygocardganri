@@ -1,6 +1,7 @@
 import {useEffect,useMemo,useState} from 'react';
 import type {SharedCard,SharedDeck} from './sharedCatalog';
-import {toYdk} from './sharedCatalog';
+import {toYdk,type SharedCatalog} from './sharedCatalog';
+import RecoveryPanel from './RecoveryPanel';
 import type {MediaItem} from './sharedMedia';
 import {buildDeckLinkReport,type ZoneKey} from './deckLinking';
 import './deck-link-panel.css';
@@ -12,8 +13,9 @@ function downloadText(name:string,text:string,mime='text/plain;charset=utf-8'){
   a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
   window.setTimeout(()=>URL.revokeObjectURL(url),1500);
 }
-type Props={decks:SharedDeck[];cards:SharedCard[];media:MediaItem[]};
-export default function DeckLinkPanel({decks,cards,media}:Props){
+type Props={decks:SharedDeck[];cards:SharedCard[];media:MediaItem[];catalog:SharedCatalog;blocked:boolean;
+  onSave:(catalog:SharedCatalog,expected:string)=>void;onImagesChanged:()=>Promise<void>};
+export default function DeckLinkPanel({decks,cards,media,catalog,blocked,onSave,onImagesChanged}:Props){
   const [selected,setSelected]=useState(0);
   const [activeZone,setActiveZone]=useState<ZoneKey>('main');
   const [urls,setUrls]=useState<Record<string,string>>({});
@@ -35,7 +37,7 @@ export default function DeckLinkPanel({decks,cards,media}:Props){
     setUrls(next);
     return ()=>{for(const url of Object.values(next))URL.revokeObjectURL(url);};
   },[zone,media]);
-  return <section className="shared-panel deck-link-panel" role="region" aria-label="덱 카드·일러스트 연결 진단">
+  return <><section className="shared-panel deck-link-panel" role="region" aria-label="덱 카드·일러스트 연결 진단">
     <div className="shared-section-title">
       <h2>03 · 덱 ↔ 카드 ↔ 일러스트 연결 진단</h2>
       <span className="deck-link-caption">읽기 전용 · 원본 YDK/이미지 변경 없음</span>
@@ -77,5 +79,7 @@ export default function DeckLinkPanel({decks,cards,media}:Props){
         </div>}
       </div>}
     </>}
-  </section>;
+  </section>
+    {deck&&<RecoveryPanel deck={deck} catalog={catalog} blocked={blocked} onSave={onSave} onImagesChanged={onImagesChanged}/>}
+  </>;
 }
