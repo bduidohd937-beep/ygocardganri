@@ -44,7 +44,7 @@ test('P2 카드 렌더러 전달은 신규 ID만 적용하며 YDK는 존별 보�
   await page.getByRole('checkbox',{name:'918760002 전송 선택'}).check();
   await page.getByRole('button',{name:'선택 카드 → 카드 렌더러'}).click();
   const maker=page.locator('[data-native-tool="cardmaker"]');
-  await expect(maker.locator('select option[value="token"]')).toHaveCount(1,{timeout:30000});
+  await expect.poll(()=>maker.evaluate(el=>el.shadowRoot?.querySelectorAll('select option[value="token"]').length??0),{timeout:30000}).toBe(1);
   await page.getByRole('button',{name:'선택 카드 신규만 가져오기'}).click();
   await expect(page.getByText('렌더러에 신규 1장 가져오기를 요청했습니다.',{exact:false})).toBeVisible();
   await expect(maker.getByText('RS－세컨드 코너').first()).toBeVisible();
