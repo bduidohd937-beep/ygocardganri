@@ -5,6 +5,7 @@ import type { CombinationMetrics } from './combinationMath';
 import { assessDuelHand,DUEL_OUTCOMES,parseHand,reportedSummary,SHUFFLE_MODES,snapshotSha256,validateHand,validateEvidenceBackup } from './duelEvidence';
 import type { DuelEvidenceRecord,DuelOutcome,ReplayEvidence,ShuffleMode } from './duelEvidence';
 import { getReplayEvidence,listDuelEvidence,mergeDuelEvidenceBackup,removeDuelEvidence,storeDuelEvidence } from './duelEvidenceVault';
+import ArenaIntake from './ArenaIntake';
 import './test-lab.css';
 
 type Props={study:DeckStudy;dirty:boolean;handSize:5|6};
@@ -199,6 +200,7 @@ export default function TestLab({study,dirty,handSize}:Props){
          </div>
        </article>)}
     </div>
+    <ArenaIntake study={study} dirty={dirty} fingerprint={fingerprint}/>
     <p className="testlab-note">JSON 복원은 기존 기록에 병합하며 기존 기록·리플레이 원본을 덮어쓰지 않아. JSON은 메타데이터만 포함하므로 복원된 리플레이 파일 정보는 실제 파일이 브라우저에 남아 있는지 확인해야 해. EDOPro 실행·리플레이 해독은 수행하지 않아.</p>
   </section>;
 }

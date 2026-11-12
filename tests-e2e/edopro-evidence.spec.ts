@@ -1,6 +1,7 @@
 import { expect,test } from '@playwright/test';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
+import JSZip from 'jszip';
 const ids=Array.from({length:20},(_,i)=>String(91008601+i));
 const deckText=['#created by P6 Chrome evidence test','#main',...ids.flatMap(x=>[x,x]),'#extra','!side',''].join('\n');
 
@@ -99,6 +100,44 @@ test('P6: imported YDK → saved study → manual EDOPro result and .yrpX eviden
   await restored.getByLabel('EDOPro 테스트 기록 JSON 가져오기').setInputFiles((await backup.path())!);
   await expect(restored.getByText('기존과 동일 2건',{exact:false})).toBeVisible();
   await expect(restored.locator('.testlab-entry')).toHaveCount(2);
+  // P6.1 imports external exports as unverified source evidence, never duel success telemetry.
+  const intake=restored.getByLabel('PSH AI ARENA 결과 파일 수집함');
+  const arenaJson=Buffer.from(JSON.stringify({sessions:[{id:'arena-fixture',state:'stalled'}],source:'fixture'}));
+  await intake.getByLabel('PSH AI ARENA 내보내기 파일').setInputFiles([
+    {name:'경기장_결과.json',mimeType:'application/json',buffer:arenaJson},
+  ]);
+  await expect(intake.getByText('원본 수집 완료.',{exact:false})).toBeVisible();
+  await expect(intake.locator('.testlab-entry')).toHaveCount(1);
+  await expect(intake.locator('.testlab-entry')).toContainText('sessions');
+  await expect(intake.locator('.testlab-entry')).toContainText('내용 미검증');
+  await expect(restored.locator('.testlab-stats>div').nth(2)).toContainText('1건');
+
+  // Same content in the same deck version is deduplicated by SHA256.
+  await intake.getByLabel('PSH AI ARENA 내보내기 파일').setInputFiles([
+    {name:'같은파일.json',mimeType:'application/json',buffer:arenaJson},
+  ]);
+  await expect(intake.getByText('중복 저장하지 않았습니다.',{exact:false})).toBeVisible();
+  await expect(intake.locator('.testlab-entry')).toHaveCount(1);
+  const sourceDownload=page.waitForEvent('download');
+  await intake.getByRole('button',{name:'원본 받기 (해시 확인)'}).click();
+  expect(await readFile((await(await sourceDownload).path())!)).toEqual(arenaJson);
+
+  const zip=new JSZip();
+  zip.file('logs/session.json',JSON.stringify({status:'incomplete'}));
+  zip.file('replays/_LastReplay.yrpX',Buffer.from('NOT_A_REAL_REPLAY'));
+  const zipBytes=await zip.generateAsync({type:'nodebuffer'});
+  await intake.getByLabel('PSH AI ARENA 내보내기 파일').setInputFiles([
+    {name:'경기장_묶음.zip',mimeType:'application/zip',buffer:zipBytes},
+  ]);
+  await expect(intake.locator('.testlab-entry')).toHaveCount(2);
+  await expect(intake.locator('.testlab-entry').first()).toContainText('ZIP 파일 목록');
+  await expect(restored.locator('.testlab-stats>div').nth(2)).toContainText('1건');
+
+  await page.reload();
+  await page.locator('.sidebar .nav-link').filter({hasText:'덱 연구실'}).click();
+  await page.getByLabel('저장된 분석안').selectOption({index:1});
+  const persisted=page.getByLabel('PSH AI ARENA 결과 파일 수집함');
+  await expect(persisted.locator('.testlab-entry')).toHaveCount(2);
   await page.locator('.sidebar .nav-link').filter({hasText:'파일 센터'}).click();
   await page.locator('.fc-file-select select').selectOption({label:'P6 EDOPro 실전 테스트'});
   await expect(page.locator('.fc-index-list')).toContainText('메인 40');
