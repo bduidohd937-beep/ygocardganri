@@ -25,7 +25,7 @@ import ImportedCardStudio from './ImportedCardStudio';
 import AuditCenter from './AuditCenter';
 import IntegrationModule from './IntegrationModule';
 import SharedLibrary from './SharedLibrary';
-import StudioHome from './StudioHome';
+const StudioHome=lazy(()=>import('./StudioHome'));
 import {
   PROJECT_SCOPE_KEY, RECENT_PAGES_KEY, addRecent, parseRecentPages, parseSharedProjectStorage,
   projectOptions, safeProjectSelection
@@ -317,9 +317,9 @@ export default function App(){
       </header>
       {saveError&&<div className="error-banner"><AlertCircle size={16}/>{saveError}<button onClick={exportBackup}>백업 내보내기</button></div>}
       <main className={`content content--${page}`}>
-        {page==='home'&&<StudioHome data={data} counts={counts} pendingCards={pendingCards} scope={activeProject} projects={studioProjects} sharedCatalog={sharedProjects.catalog}
+        {page==='home'&&<Suspense fallback={<div className="not-yet">YGO STUDIO 대시보드를 불러오는 중...</div>}><StudioHome data={data} counts={counts} pendingCards={pendingCards} scope={activeProject} projects={studioProjects} sharedCatalog={sharedProjects.catalog}
           recentPages={recentPages.map(key=>NAV.find(p=>p.key===key)).filter((item):item is typeof NAV[number]=>!!item).map(item=>({key:item.key as 'home'|'themes'|'cards'|'worlds'|'reviews'|'decks'|'shared'|'artlab'|'cardmaker'|'designlab'|'arena'|'history',name:item.name}))}
-          onNavigate={go} onScopeChange={changeProject} onOpenWorld={openWorld} onOpenCard={openCard}/>}
+          onNavigate={go} onScopeChange={changeProject} onOpenWorld={openWorld} onOpenCard={openCard}/></Suspense>}
         {page==='themes'&&<><PageHeading eyebrow="PROJECT LIBRARY / 001" title="테마 라이브러리" subtitle="서로 다른 세계와 카드군을 하나의 제작 원장으로 관리합니다."/><div className="feature-theme"><div><span className="micro-label">PROJECT 001 / ACTIVE</span><h2>종언성서 — 녹투르나</h2><p>최종 테마 《무명성서》를 중심으로 다섯 세계의 카드·설정·진화 계보를 관리합니다.</p><div className="feature-tags"><span>세계 5</span><span>초기 카드 {data.cards.length}</span><span>확정 하급 아벨 5</span></div></div><div className="feature-theme-deco">✧</div></div>
           <SectionTitle index="A" title="세계별 설계 원장" aside="SELECT A WORLD"/>
           <div className="theme-grid">{data.worlds.map((w,i)=><button key={w.id} className="theme-world" onClick={()=>openWorld(w.id)} style={{'--realm':w.accent} as React.CSSProperties}><div className="theme-world-top"><span>0{i+1} / {w.shortLabel}</span><ArrowRight size={18}/></div><div className="theme-world-sigil">{['✧','◷','◈','⌁','⌘'][i]}</div><strong>{w.name}</strong><small>{w.concept}</small><div className="theme-world-bottom">레벨 4 아벨 등록 <Check size={15}/></div></button>)}</div>
