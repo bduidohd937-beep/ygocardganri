@@ -1,7 +1,6 @@
 import {useEffect,useMemo,useState} from 'react';
 import type {SharedCatalog,SharedDeck} from './sharedCatalog';
 import {CATALOG_KEY,emptyCatalog,mergeCatalog} from './sharedCatalog';
-import {listMedia} from './sharedMedia';
 import {scanDeckRecovery,addRecoveryImages} from './recoveryService';
 import type {RecoveryRow,CardRecoveryState,ArtRecoveryState} from './recoveryModel';
 
