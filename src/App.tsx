@@ -24,11 +24,12 @@ import FileCenter from './FileCenter';
 import ImportedCardStudio from './ImportedCardStudio';
 import AuditCenter from './AuditCenter';
 import IntegrationModule from './IntegrationModule';
+import SharedLibrary from './SharedLibrary';
 const DeckLab=lazy(()=>import('./DeckLab'));
 import { loadAllImportedRecords, restoreWorkbenchBackup, validateWorkbenchBackup } from './workbenchVault';
 import { buildCardIndex, searchCardIndex, visibleSlice, CARD_PAGE_SIZE, HISTORY_PAGE_SIZE } from './performance';
 
-type Page = 'home'|'themes'|'cards'|'studio'|'worlds'|'reviews'|'audit'|'files'|'decks'|'artlab'|'cardmaker'|'designlab'|'arena'|'history'|'settings';
+type Page = 'home'|'themes'|'cards'|'studio'|'worlds'|'reviews'|'audit'|'files'|'decks'|'shared'|'artlab'|'cardmaker'|'designlab'|'arena'|'history'|'settings';
 type Notice = { text:string; kind:'success'|'error'|'info' };
 const NAV: { key:Page; name:string; group:'workspace'|'tools'; icon: typeof LayoutGrid }[] = [
   {key:'home',name:'대시보드',group:'workspace',icon:LayoutGrid},
@@ -39,6 +40,7 @@ const NAV: { key:Page; name:string; group:'workspace'|'tools'; icon: typeof Layo
   {key:'audit',name:'오류 분석',group:'tools',icon:ShieldAlert},
   {key:'files',name:'파일 센터',group:'tools',icon:FolderOpen},
   {key:'decks',name:'덱 연구실',group:'tools',icon:Activity},
+  {key:'shared',name:'공통 카드·덱 보관함',group:'tools',icon:Database},
   {key:'artlab',name:'이미지 연구소',group:'tools',icon:Image},
   {key:'cardmaker',name:'카드 렌더러',group:'tools',icon:CreditCard},
   {key:'designlab',name:'디자인·덱 실험실',group:'tools',icon:FlaskConical},
@@ -310,6 +312,7 @@ export default function App(){
         {page==='audit'&&<AuditCenter onOpenCard={openImportedCard}/>}
         {page==='files'&&<FileCenter view="files" onOpenCard={openImportedCard}/>}
         {page==='decks'&&<><PageHeading eyebrow="DECK LAB / P5" title="덱 연구실" subtitle="YDK 원본과 분석안을 분리해 40~60장 구성·초동 패 확률·매수 시나리오를 연구합니다."/><Suspense fallback={<div className="not-yet">덱 연구실을 불러오는 중...</div>}><DeckLab/></Suspense></>}
+        {page==='shared'&&<SharedLibrary onOpenModule={target=>go(target)}/>}
         {page==='artlab'&&<IntegrationModule moduleId="artlab"/>}
         {page==='cardmaker'&&<IntegrationModule moduleId="cardmaker"/>}
         {page==='designlab'&&<IntegrationModule moduleId="designlab"/>}
