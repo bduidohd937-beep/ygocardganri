@@ -18,11 +18,18 @@ test('로컬 ZIP과 동일한 카드메이커를 YGO STUDIO에서 실행한다',
     })),
     status:await page.locator('.native-workspace').first().innerText()
   }).slice(0,5500));
-  await expect.poll(async()=>{
-    const error=await page.locator('.native-workspace-error').first().textContent().catch(()=>null);
-    if(error)throw Error(error+' / JS errors: '+pageErrors.join(' | ').slice(0,1200));
-    return await tool.evaluate(el=>el.shadowRoot?.querySelectorAll('select option[value="token"]').length??0);
-  },{timeout:20000}).toBe(1);
+  await page.waitForTimeout(3000);
+  const after=await tool.evaluate(el=>({
+    options:el.shadowRoot?.querySelectorAll('select option[value="token"]').length??0,
+    childCount:el.shadowRoot?.childNodes.length??0,
+    cardNames:el.shadowRoot?.querySelectorAll('.card-summary').length??0,
+    editorText:el.shadowRoot?.querySelector('.editor')?.textContent?.slice(0,500),
+    hasApp:!!el.shadowRoot?.querySelector('.app-shell'),
+    textLength:el.shadowRoot?.textContent?.length??0,
+    htmlEnd:el.shadowRoot?.innerHTML.slice(-1300),
+  }));
+  console.log('[native after 3 sec]',JSON.stringify({after,pageErrors}));
+  expect(after.options,'토큰 프레임이 사라지는 경우의 React 수명주기 상태').toBe(1);
 
   // 로컬 ZIP에서 확인한 신규 기능: 토큰 프레임과 카드 리소스 ZIP 분류.
   await expect(tool.evaluate(el=>el.shadowRoot?.querySelectorAll('select option[value="token"]').length??0)).resolves.toBe(1);
