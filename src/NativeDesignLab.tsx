@@ -107,7 +107,7 @@ async function loadNativeDesignLab(host:HTMLDivElement,wasCancelled:()=>boolean)
     for(const {type,callback,options} of listeners)window.removeEventListener(type,callback,options);
     if(global.__YGO_LAB_CONTEXT__===context)delete global.__YGO_LAB_CONTEXT__;
     if(global.JSZip===JSZip){if(previousJSZip)global.JSZip=previousJSZip;else delete global.JSZip;}
-    if(previousSql)global.initSqlJs=previousSql;else delete global.initSqlJs;
+    if(previousSql)global.initSqlJs=previousSql;else Reflect.deleteProperty(global,'initSqlJs');
     if(shadow.contains(style))shadow.replaceChildren();
   };
   try{
