@@ -138,6 +138,39 @@ test('P6: imported YDK → saved study → manual EDOPro result and .yrpX eviden
   await page.getByLabel('저장된 분석안').selectOption({index:1});
   const persisted=page.getByLabel('PSH AI ARENA 결과 파일 수집함');
   await expect(persisted.locator('.testlab-entry')).toHaveCount(2);
+  // P6.1 stage 2: only the user's explicit status mapping can categorize a raw string.
+  await persisted.locator('.testlab-entry').filter({hasText:'경기장_결과.json'})
+    .getByRole('button',{name:'세션 결과 검수'}).click();
+  const review=persisted.getByLabel('경기장 세션 결과 검수');
+  await expect(review.getByLabel('분석 대상 배열')).toHaveValue('sessions');
+  await review.getByLabel('세션 ID 필드').selectOption('id');
+  await review.getByLabel('결과 코드 필드').selectOption('state');
+  await expect(review.getByLabel('세션 분류 집계')).toContainText('미분류·미확인1');
+  await review.getByLabel('결과 코드 stalled').selectOption('교착·중단 기록');
+  await expect(review.locator('.arena-review-stats>div').nth(4)).toContainText('1');
+  await expect(review.locator('.arena-review-stats>div').nth(1)).toContainText('0');
+  await review.getByRole('button',{name:'분류표 저장'}).click();
+  await expect(review.getByText('사용자 지정 분류표를 별도', {exact:false})).toBeVisible();
+  const mappedDownload=page.waitForEvent('download');
+  await review.getByRole('button',{name:'검수 보고서 JSON 받기'}).click();
+  const mapped=JSON.parse(await readFile((await(await mappedDownload).path())!,'utf8'));
+  expect(mapped.provenance).toContain('엔진 검증 아님');
+  expect(mapped.totals.interrupted).toBe(1);
+  expect(mapped.totals.win).toBe(0);
+  expect(JSON.stringify(mapped)).not.toContain('YRPX_TEST_FIXTURE');
+  expect(JSON.stringify(mapped)).not.toContain('NOT_A_REAL_REPLAY');
+  await expect(page.getByLabel('EDOPro 실전 검증 기록').locator('.testlab-stats>div').nth(2)).toContainText('1건');
+  await page.reload();
+  await page.locator('.sidebar .nav-link').filter({hasText:'덱 연구실'}).click();
+  await page.getByLabel('저장된 분석안').selectOption({index:1});
+  const restoredMapping=page.getByLabel('PSH AI ARENA 결과 파일 수집함');
+  await restoredMapping.locator('.testlab-entry').filter({hasText:'경기장_결과.json'})
+    .getByRole('button',{name:'세션 결과 검수'}).click();
+  const savedReview=restoredMapping.getByLabel('경기장 세션 결과 검수');
+  await expect(savedReview.getByLabel('세션 ID 필드')).toHaveValue('id');
+  await expect(savedReview.getByLabel('결과 코드 필드')).toHaveValue('state');
+  await expect(savedReview.getByLabel('결과 코드 stalled')).toHaveValue('교착·중단 기록');
+  await expect(page.getByLabel('EDOPro 실전 검증 기록').locator('.testlab-stats>div').nth(2)).toContainText('1건');
   await page.locator('.sidebar .nav-link').filter({hasText:'파일 센터'}).click();
   await page.locator('.fc-file-select select').selectOption({label:'P6 EDOPro 실전 테스트'});
   await expect(page.locator('.fc-index-list')).toContainText('메인 40');
