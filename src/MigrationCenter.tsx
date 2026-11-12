@@ -25,7 +25,6 @@ function downloadBlob(blob:Blob,name:string){
   window.setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
 function fmt(bytes:number){return bytes>=1048576?(bytes/1048576).toFixed(2)+' MiB':Math.ceil(bytes/1024)+' KiB';}
-function asObject(v:unknown):v is Record<string,unknown>{return v!==null&&typeof v==='object'&&!Array.isArray(v);}
 async function makerProject():Promise<unknown>{
   if(typeof indexedDB.databases==='function'){
     const dbs=await indexedDB.databases();
