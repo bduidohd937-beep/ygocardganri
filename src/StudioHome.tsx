@@ -1,6 +1,6 @@
 import {
-  Activity, ArrowRight, BookOpen, CheckCircle2, Clock3, CreditCard,
-  Database, FileText, FlaskConical, GitCompareArrows, Image, Layers3,
+  ArrowRight, BookOpen, CheckCircle2, Clock3, CreditCard,
+  Database, FileText, FlaskConical, Image, Layers3,
   ShieldCheck, Swords
 } from 'lucide-react';
 import type { Card, StudioData } from './data';
