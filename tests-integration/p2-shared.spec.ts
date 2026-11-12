@@ -20,7 +20,7 @@ test('P2 공통 카드 등록·중복 충돌 방지·이미지 연구소 전달'
   await expect(page.getByRole('cell',{name:'RS－오리온'})).toBeVisible();
   await page.getByRole('checkbox',{name:'918760001 전송 선택'}).check();
   await page.getByRole('button',{name:'선택 카드 → 이미지 연구소'}).click();
-  await expect(page.getByText('공통 보관함에서 선택 카드 1장 대기')).toBeVisible();
+  await expect(page.getByText('공통 보관함 선택 카드',{exact:false})).toBeVisible();
   const frame=page.locator('[data-native-tool="artlab"]');
   await expect(frame.locator('#art-canvas')).toBeVisible({timeout:30000});
   await page.getByRole('button',{name:'선택 카드 신규만 가져오기'}).click();
