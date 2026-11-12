@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import {
   CATALOG_KEY, HANDOFF_KEY, emptyCatalog, mergeCatalog, parseCards, parsePortableJson,
-  parseYdk, toYdk, validateCatalog, validCardId
+  parseYdk, validateCatalog, validCardId
 } from './sharedCatalog';
-import type { Handoff, ImportCandidate, SharedCatalog, SharedDeck } from './sharedCatalog';
+import type { Handoff, ImportCandidate, SharedCatalog } from './sharedCatalog';
 import SharedMediaSection from './SharedMediaSection';
+import DeckLinkPanel from './DeckLinkPanel';
+import type {MediaItem} from './sharedMedia';
 import './shared-library.css';
 
 const MAX_UPLOAD=3*1024*1024;
@@ -22,7 +24,6 @@ function initCatalog():{catalog:SharedCatalog;error:string}{
     return {catalog:o,error:''};
   }catch(e){return {catalog:emptyCatalog(),error:'기존 공통 보관함이 올바르지 않습니다. 자동으로 덮어쓰지 않습니다. 먼저 브라우저 저장 데이터를 백업/확인하세요. '+String(e)};}
 }
-function cleanName(name:string):string{return name.replace(/[\\/:*?"<>|]/g,'_').slice(0,60)||'덱';}
 function fromCsv(text:string):ImportCandidate{
   const rows:string[][]=[];let row:string[]=[],field='',quoted=false;
   for(let i=0;i<text.length;i++){
@@ -52,7 +53,7 @@ async function makerCards():Promise<unknown[]>{
     if(!dbs.some(x=>x.name==='duelmind-card-studio'))throw Error('통합 카드 렌더러에서 저장된 프로젝트가 없습니다.');
   }
   const db=await new Promise<IDBDatabase>((resolve,reject)=>{
-    const req=indexedDB.open('duelmind-card-studio',1);
+    const req=indexedDB.open('duelmind-card-studio');
     req.onupgradeneeded=()=>req.transaction?.abort();
     req.onsuccess=()=>resolve(req.result);
     req.onerror=()=>reject(req.error||Error('카드 렌더러 자료실을 열 수 없습니다.'));
@@ -73,6 +74,7 @@ type Props={onOpenModule:(tool:'artlab'|'cardmaker')=>void;initialFilter?:string
 export default function SharedLibrary({onOpenModule,initialFilter=''}:Props){
   const [initial]=useState(initCatalog);
   const [catalog,setCatalog]=useState(initial.catalog);
+  const [mediaItems,setMediaItems]=useState<MediaItem[]>([]);
   const [blocked]=useState(initial.error);
   const [preview,setPreview]=useState<{candidate:ImportCandidate;name:string}|null>(null);
   const [message,setMessage]=useState('');
@@ -168,7 +170,7 @@ export default function SharedLibrary({onOpenModule,initialFilter=''}:Props){
       <div><strong>{visibleSelection.length}</strong><span>전송 선택 카드</span></div>
     </div>
     <div className="shared-warning" role="note"><strong>데이터 이전은 보수적으로 처리합니다.</strong> 기존 사이트와 통합 사이트의 저장공간은 다릅니다. 카드·덱 메타는 ID 기준으로 안전하게 관리하고, 이미지 연결은 아래 공통 이미지 보관함에 별도 복사합니다. 원본 EDOPro·CDB·Lua 및 승인·검증 결과는 변경하지 않으며, 동일 카드 ID의 다른 원문은 충돌로 남겨 덮어쓰지 않습니다.</div>
-    <SharedMediaSection cards={catalog.cards} blocked={!!blocked}/>
+    <SharedMediaSection cards={catalog.cards} blocked={!!blocked} onItemsChange={setMediaItems}/>
     {blocked&&<div className="shared-error" role="alert">{blocked}</div>}
     {message&&<div className="shared-message" role="status">{message}</div>}
     <section className="shared-panel">
@@ -212,17 +214,6 @@ export default function SharedLibrary({onOpenModule,initialFilter=''}:Props){
       </div>
       {catalog.cards.length>300&&<p className="shared-help">목록 성능 보호를 위해 검색 결과 상위 300장만 표시합니다.</p>}
     </section>
-    <section className="shared-panel">
-      <h2>03 · YDK 덱 메타 연결</h2>
-      <p className="shared-help">YDK의 메인·엑스트라·사이드 카드 ID를 보존하고 공통 카드 목록과 대조합니다. 초동률·승률·OCG 금제 적합성을 계산하거나 인증하지 않습니다.</p>
-      {catalog.decks.length?<div className="shared-decks">{catalog.decks.map((d:SharedDeck,i)=>{
-        const known=new Set(catalog.cards.map(c=>c.id));
-        const ids=[...d.main,...d.extra,...d.side];const linked=ids.filter(id=>known.has(id)).length;
-        return <div className="shared-deck" key={i}>
-          <div><strong>{d.name}</strong><small>메인 {d.main.length} / 엑스트라 {d.extra.length} / 사이드 {d.side.length} · 카드 ID 연결 {linked}/{ids.length}장</small></div>
-          <button onClick={()=>makeDownload(cleanName(d.name)+'_공통보관함.ydk',toYdk(d),'text/plain;charset=utf-8')}>YDK ↓</button>
-        </div>;
-      })}</div>:<p className="shared-empty">등록한 덱이 없습니다. YDK 파일을 선택하면 원본 카드 ID 구성을 추가합니다.</p>}
-    </section>
+    <DeckLinkPanel decks={catalog.decks} cards={catalog.cards} media={mediaItems}/>
   </div>;
 }
