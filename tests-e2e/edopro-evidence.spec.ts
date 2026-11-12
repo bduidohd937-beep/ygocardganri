@@ -28,7 +28,12 @@ test('P6: imported YDK → saved study → manual EDOPro result and .yrpX eviden
 
   await page.getByLabel('새 루트 A 카드').selectOption(ids[0]);
   await page.getByRole('button',{name:'루트 추가'}).click();
+  // P6 must not duplicate the existing P5 research panel during React re-renders.
+  await expect(page.locator('.combo-shell')).toHaveCount(1);
+  await expect(page.locator('.testlab')).toHaveCount(1);
   await page.getByRole('button',{name:'분석안 저장'}).click();
+  await expect(page.locator('.combo-shell')).toHaveCount(1);
+  await expect(page.locator('.testlab')).toHaveCount(1);
   await expect(page.locator('.decklab-save-state')).toContainText('저장된 분석안');
   await expect(panel.getByRole('button',{name:'테스트 기록 저장'})).toBeEnabled();
 
