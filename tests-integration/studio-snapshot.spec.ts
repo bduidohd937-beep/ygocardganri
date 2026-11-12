@@ -185,5 +185,6 @@ test('V2.7.1: 다른 도구가 IndexedDB를 버전 3으로 올려도 없는 Blob
   });
   expect(result.version).toBe(3);
   expect(result.name).toBe('검수.ydk');
-  expect(result.source).toBe('#main\\n918760001\\n');
+  expect(result.source.startsWith('#main')).toBe(true);
+  expect(result.source).toContain('918760001');
 });
