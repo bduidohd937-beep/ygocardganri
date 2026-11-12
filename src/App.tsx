@@ -6,7 +6,7 @@ import {
   ChevronDown, ChevronRight, Clock3, Database, Download, PanelLeftClose, PanelLeftOpen,
   FileQuestion, FileText, Filter, FolderOpen, GitCompareArrows,
   History, Layers3, LayoutGrid, Menu, Plus, Save, Search,
-  Settings2, ShieldAlert, ShieldCheck, SlidersHorizontal, Upload,
+  Settings2, ShieldAlert, ShieldCheck, SlidersHorizontal, Upload, HardDrive,
   X, AlertCircle, Info, CircleHelp, Image, CreditCard, FlaskConical, Swords
 } from 'lucide-react';
 import {
@@ -25,6 +25,7 @@ import ImportedCardStudio from './ImportedCardStudio';
 import AuditCenter from './AuditCenter';
 import IntegrationModule from './IntegrationModule';
 import SharedLibrary from './SharedLibrary';
+const MigrationCenter=lazy(()=>import('./MigrationCenter'));
 const StudioHome=lazy(()=>import('./StudioHome'));
 import {
   PROJECT_SCOPE_KEY, RECENT_PAGES_KEY, addRecent, parseRecentPages, parseSharedProjectStorage,
@@ -36,7 +37,7 @@ const DeckLab=lazy(()=>import('./DeckLab'));
 import { loadAllImportedRecords, restoreWorkbenchBackup, validateWorkbenchBackup } from './workbenchVault';
 import { buildCardIndex, searchCardIndex, visibleSlice, CARD_PAGE_SIZE, HISTORY_PAGE_SIZE } from './performance';
 
-type Page = 'home'|'themes'|'cards'|'studio'|'worlds'|'reviews'|'audit'|'files'|'decks'|'shared'|'artlab'|'cardmaker'|'designlab'|'arena'|'history'|'settings';
+type Page = 'home'|'themes'|'cards'|'studio'|'worlds'|'reviews'|'audit'|'files'|'decks'|'shared'|'migration'|'artlab'|'cardmaker'|'designlab'|'arena'|'history'|'settings';
 type Notice = { text:string; kind:'success'|'error'|'info' };
 type NavGroup = 'home'|'create'|'research'|'manage';
 const NAV: { key:Page; name:string; group:NavGroup; icon: typeof LayoutGrid }[] = [
@@ -52,6 +53,7 @@ const NAV: { key:Page; name:string; group:NavGroup; icon: typeof LayoutGrid }[] 
   {key:'audit',name:'오류 분석',group:'research',icon:ShieldAlert},
   {key:'arena',name:'PSH 검증 관제실',group:'research',icon:Swords},
   {key:'shared',name:'공통 카드·덱 보관함',group:'manage',icon:Database},
+  {key:'migration',name:'기존 사이트 데이터 이전',group:'manage',icon:HardDrive},
   {key:'files',name:'파일 센터',group:'manage',icon:FolderOpen},
   {key:'history',name:'변경 이력',group:'manage',icon:History},
   {key:'settings',name:'백업 · 설정',group:'manage',icon:Settings2},
@@ -365,6 +367,7 @@ export default function App(){
         {page==='audit'&&<AuditCenter onOpenCard={openImportedCard}/>}
         {page==='files'&&<FileCenter view="files" onOpenCard={openImportedCard}/>}
         {page==='decks'&&<><PageHeading eyebrow="DECK LAB / P5" title="덱 연구실" subtitle="YDK 원본과 분석안을 분리해 40~60장 구성·초동 패 확률·매수 시나리오를 연구합니다."/><Suspense fallback={<div className="not-yet">덱 연구실을 불러오는 중...</div>}><DeckLab/></Suspense></>}
+        {page==='migration'&&<Suspense fallback={<div className="not-yet">데이터 이전 센터를 불러오는 중...</div>}><MigrationCenter studioData={data} onNavigate={go}/></Suspense>}
         {page==='shared'&&<SharedLibrary onOpenModule={target=>go(target)} initialFilter={activeProject.startsWith('shared:')?activeProject.slice(7):''}/>}
         {page==='artlab'&&<IntegrationModule moduleId="artlab"/>}
         {page==='cardmaker'&&<IntegrationModule moduleId="cardmaker"/>}
@@ -373,7 +376,7 @@ export default function App(){
         {page==='history'&&<><PageHeading eyebrow="CHANGE HISTORY / AUDIT LOG" title="변경 이력" subtitle="승인된 카드 원문과 제안, 카드 정보 및 세계관 수정 기록을 추적합니다."/><div className="history-list">{data.history.length===0?<Empty icon={<History size={28}/>} title="기록이 비어 있습니다" detail="카드 정보 수정과 효과 제안, 승인 결과가 이곳에 쌓입니다."/>:shownHistory.map(h=><HistoryItem key={h.id} item={h}/>)}</div>{shownHistory.length<data.history.length&&<div className="more-results"><span>{shownHistory.length.toLocaleString('ko-KR')} / {data.history.length.toLocaleString('ko-KR')}건 표시</span><button className="outline-button" onClick={()=>setHistoryLimit(n=>n+HISTORY_PAGE_SIZE)}>다음 이력 {Math.min(HISTORY_PAGE_SIZE,data.history.length-shownHistory.length)}건 보기 <ChevronDown size={16}/></button></div>}</>}
         {page==='settings'&&<><PageHeading eyebrow="DATA MANAGEMENT" title="백업 · 설정" subtitle="자료는 현재 브라우저에 저장됩니다. 중요한 변경 사항은 정기적으로 JSON 백업을 받아 보관하세요."/><div className="settings-grid"><div className="settings-panel"><Database size={25}/><h2>데이터 보관</h2><p>현재 저장 방식: <strong>{storageMode}</strong></p><small>서버 동기화는 구현되지 않았습니다. 다른 기기에서는 JSON 백업을 가져와야 합니다. 브라우저 데이터 삭제 시 복구할 수 없습니다.</small></div><div className="settings-panel"><Download size={25}/><h2>백업 내보내기</h2><p>《녹투르나》 설계 카드 16종과 효과 제안·승인·변경 이력 JSON을 내보냅니다. 외부 테마 작업 문서는 별도 백업합니다.</p><button className="primary-button" onClick={exportBackup}><Download size={16}/> 녹투르나 설계 JSON 내보내기</button></div><div className="settings-panel"><Upload size={25}/><h2>백업 가져오기</h2><p>구조가 유효한 V1 백업만 읽습니다. 기존 데이터를 교체하기 전에 확인합니다.</p><input ref={filePicker} type="file" accept="application/json,.json" onChange={e=>void importBackup(e.target.files?.[0]??null)} hidden/><button className="outline-button" onClick={()=>filePicker.current?.click()}><Upload size={16}/> JSON 불러오기</button></div><div className="settings-panel"><FileText size={25}/><h2>외부 테마 작업 문서 백업</h2><p>코스모코드 등 업로드 카드의 설계 메모, 승인 효과, 제안·검수·변경 이력을 JSON으로 저장합니다. 원본 바이너리는 제외됩니다.</p><button className="primary-button" onClick={()=>void exportWorkbench()}><Download size={16}/> 작업 문서 내보내기</button><input ref={workbenchPicker} type="file" accept=".json,application/json" hidden onChange={e=>void importWorkbench(e.target.files?.[0]??null)}/><button className="outline-button" onClick={()=>workbenchPicker.current?.click()}><Upload size={16}/> 작업 문서 복원</button></div><div className="settings-panel settings-panel--danger"><ShieldAlert size={25}/><h2>초기 데이터 복원</h2><p>진행 중인 변경 사항이 사라집니다. 먼저 백업을 저장하세요.</p><button className="danger-button" onClick={reset}>초기 상태로 되돌리기</button></div></div><div className="note-line"><Info size={16}/>V2 독립형 HTML 백업은 구조가 다릅니다. V2 → 신규 스키마 이관기는 별도 검증 후 추가합니다.</div></>}
       </main>
-      <footer className="footer"><span>YGO STUDIO <em>UI V2.0</em></span><span>확정과 검증은 별도 상태 · 미확인 정보는 추정하지 않습니다.</span></footer>
+      <footer className="footer"><span>YGO STUDIO <em>V2.1</em></span><span>확정과 검증은 별도 상태 · 미확인 정보는 추정하지 않습니다.</span></footer>
     </div>
     {notice&&<div className={`toast toast--${notice.kind}`} role="status">{notice.kind==='success'?<CheckCircle2 size={17}/>:notice.kind==='error'?<AlertCircle size={17}/>:<Info size={17}/>}<span>{notice.text}</span><button onClick={()=>setNotice(null)} aria-label="알림 닫기"><X size={15}/></button></div>}
   </div>;

@@ -1,0 +1,71 @@
+.migration-center{display:grid;gap:19px;max-width:1280px;margin:0 auto;color:#e5ecf4}
+.migration-head{display:flex;justify-content:space-between;align-items:start;gap:15px;flex-wrap:wrap}
+.migration-head h1{font-size:27px;margin:7px 0 9px;letter-spacing:-.04em}
+.migration-head p{color:#a6b5c5;line-height:1.8;font-size:12px;max-width:690px;margin:0}
+.migration-kicker{font:10px 'DM Mono',monospace;letter-spacing:.14em;color:#c4877f}
+.migration-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.migration-stats>div{border:1px solid #353f4d;background:#18212c;padding:17px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.migration-stats span{color:#a5b4c6;font-size:12px;flex:1}
+.migration-stats strong{font-size:19px;color:#d9e7e8;white-space:nowrap}
+.migration-stats svg{color:#bd8a81}
+.migration-alert{display:flex;gap:12px;align-items:flex-start;border:1px solid #6d6450;background:#26251f;padding:16px 18px;color:#d9d4c4;font-size:12px;line-height:1.9}
+.migration-alert svg{flex-shrink:0;margin-top:3px;color:#d5b783}
+.migration-alert strong{display:block;color:#f6e6c6}
+.migration-section{border:1px solid #364353;padding:20px;background:#141c25;display:grid;gap:15px}
+.migration-section-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.migration-section-heading span{font-size:10px;letter-spacing:.13em;color:#ac7d7b}
+.migration-section-heading h2{font-size:17px;font-weight:600;margin:8px 0 0;color:#edf1f7}
+.migration-secondary{color:#929fae;font-size:11px}
+.migration-section button,.migration-primary{display:inline-flex;align-items:center;gap:7px;justify-content:center;border:1px solid #526071;border-radius:6px;padding:10px 13px;cursor:pointer;background:#263645;color:#e8f0f8;font-size:12px;font-weight:650}
+.migration-primary,.migration-section button.migration-primary{background:#6b4445;border-color:#97656a;color:#fff}
+.migration-section button:hover,.migration-primary:hover{filter:brightness(1.18)}
+.migration-section button:disabled,.migration-primary:disabled{opacity:.46;cursor:not-allowed;filter:none}
+.migration-sources{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.migration-source{border:1px solid #34404d;padding:14px;background:#1a2430;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center}
+.migration-source>div{min-width:155px;flex:1}
+.migration-source strong{font-size:13px}
+.migration-source p{font-size:11px;color:#9eb0bf;line-height:1.7;margin:7px 0 0}
+.migration-source a{display:inline-flex;align-items:center;gap:5px;color:#d7b5ad;font-size:11px;white-space:nowrap}
+.migration-quick{border-top:1px solid #394551;padding-top:18px}
+.migration-quick strong{font-size:13px}
+.migration-quick p{font-size:11px;color:#a6b2c0;line-height:1.7}
+.migration-actions{display:flex;flex-wrap:wrap;gap:9px}
+.migration-upload{padding:25px;border:1px dashed #647080;background:#182633;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
+.migration-upload svg{color:#c59b93}
+.migration-upload strong{font-size:13px}
+.migration-upload p{font-size:11px;color:#a1b0bd;margin:0;max-width:650px;line-height:1.8}
+.migration-pending,.migration-compare{background:#202e3c;border:1px solid #50677c;padding:15px;display:grid;gap:12px}
+.migration-pending h3,.migration-compare h3{font-size:14px;margin:0}
+.migration-pending-item{display:flex;justify-content:space-between;align-items:start;gap:15px;border-bottom:1px solid #3b4b5a;padding:9px 0}
+.migration-pending-item>div{min-width:0}
+.migration-pending-item strong{display:block;font-size:12px;overflow-wrap:anywhere}
+.migration-pending-item small{display:block;color:#a6b6c6;margin-top:5px}
+.migration-pending-item p{font-size:11px;color:#99a9bc;line-height:1.7}
+.migration-pending-item code,.migration-entry-meta code{font-size:10px;color:#9cafc3;overflow-wrap:anywhere}
+.migration-pending-item>span{font-size:11px;white-space:nowrap}
+.migration-good{color:#a4daca}.migration-muted{color:#c9b18a}.migration-danger{color:#f1a9a9}
+.migration-error,.migration-message{border-radius:6px;padding:13px 17px;font-size:12px;line-height:1.8;margin:0}
+.migration-error{background:#3c252c;border:1px solid #90535c;color:#ffd1d2}
+.migration-message{background:#1a3637;border:1px solid #3e7770;color:#c9e6e2}
+.migration-empty{border:1px dashed #445363;padding:18px;color:#9dabba;font-size:12px;line-height:1.8}
+.migration-entries{display:grid;gap:10px}
+.migration-entry{border:1px solid #39495a;background:#1a2633;padding:15px;display:grid;gap:13px}
+.migration-entry-main{display:grid;gap:8px}
+.migration-entry-title{display:flex;align-items:center;flex-wrap:wrap;gap:9px}
+.migration-entry-title strong{font-size:13px;word-break:break-word}
+.migration-entry-title span{padding:4px 7px;border:1px solid #555362;color:#d6b4a9;font-size:10px}
+.migration-entry-main p{font-size:11px;color:#acb8c7;margin:0;line-height:1.7}
+.migration-entry-meta{display:flex;flex-wrap:wrap;gap:12px;color:#abbcce;font-size:10px}
+.migration-entry-main small{font-size:10px;color:#9ca9b8}
+.migration-entry-actions{display:flex;flex-wrap:wrap;gap:8px}
+.migration-compare p{margin:0;color:#b2c1cc;font-size:12px;line-height:1.8}
+.migration-compare-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.migration-compare-grid>div{display:grid;gap:7px;padding:12px;background:#152331;border:1px solid #3e5263}
+.migration-compare-grid span{font-size:10px;color:#acbecc}
+.migration-compare-grid strong{font-size:20px}
+.migration-warning{color:#e3c7b5!important}
+.migration-checks{display:grid;gap:12px}
+.migration-checks>div{display:flex;align-items:flex-start;gap:11px;font-size:12px;color:#b9c6d1;line-height:1.7}
+.migration-checks svg{color:#d6a49d;flex-shrink:0}
+@media(max-width:900px){.migration-sources{grid-template-columns:1fr}.migration-compare-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:650px){.migration-section{padding:14px}.migration-head h1{font-size:22px}.migration-stats{grid-template-columns:1fr}.migration-compare-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.migration-pending-item{flex-direction:column}.migration-head>.migration-primary{width:100%}}
