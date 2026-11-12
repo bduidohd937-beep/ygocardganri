@@ -111,7 +111,7 @@ export default function TestLab({study,dirty,handSize}:Props){
     if(!file||busy)return;
     setBusy(true);setError('');setStatus('');
     try{
-      if(file.size>4*1024*1024)throw new Error('테스트 기록 JSON은 4MiB 이하만 가져올 수 있습니다.');
+      if(file.size>24*1024*1024)throw new Error('테스트 기록 JSON은 24MiB 이하만 가져올 수 있습니다.');
       const payload:unknown=JSON.parse(await file.text());
       if(!validateEvidenceBackup(payload))throw new Error('EDOPro 테스트 기록 JSON 백업 형식이 올바르지 않습니다.');
       if(payload.records.some(r=>r.studyId!==study.id))
