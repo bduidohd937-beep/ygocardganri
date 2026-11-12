@@ -5,6 +5,7 @@ import { inspectArenaExport,sha256Blob } from './arenaIntake';
 import type { ArenaIntakeRecord } from './arenaIntake';
 import { addArenaIntake,arenaIntakeId,getArenaIntakeFile,listArenaIntake,removeArenaIntake } from './arenaIntakeVault';
 import { snapshotSha256 } from './duelEvidence';
+import ArenaSessionReview from './ArenaSessionReview';
 import './arena-intake.css';
 
 type Props={study:DeckStudy;dirty:boolean;fingerprint:string};
@@ -19,9 +20,10 @@ export default function ArenaIntake({study,dirty,fingerprint}:Props){
   const [error,setError]=useState('');
   const [status,setStatus]=useState('');
   const [busy,setBusy]=useState(false);
+  const [reviewId,setReviewId]=useState('');
   const picker=useRef<HTMLInputElement>(null);
   useEffect(()=>{
-    let alive=true;setRecords([]);setError('');
+    let alive=true;setRecords([]);setError('');setReviewId('');
     void listArenaIntake(study.id).then(data=>{if(alive)setRecords(data);})
       .catch(e=>{if(alive)setError(e instanceof Error?e.message:'수집함 조회 실패');});
     return()=>{alive=false;};
@@ -63,6 +65,7 @@ export default function ArenaIntake({study,dirty,fingerprint}:Props){
     if(busy||!window.confirm('이 수집 기록과 파일 사본을 삭제할까요? 원본 외부 파일은 변경되지 않습니다.'))return;
     setBusy(true);setError('');setStatus('');
     try{await removeArenaIntake(rec.id);setRecords(await listArenaIntake(study.id));
+      if(reviewId===rec.id)setReviewId('');
       setStatus('수집함 사본만 삭제했습니다. P5/P6와 원본 YDK·CDB·Lua는 변경하지 않았습니다.');}
     catch(e){setError(e instanceof Error?e.message:'수집 기록 삭제 실패');}
     finally{setBusy(false);}
@@ -96,6 +99,9 @@ export default function ArenaIntake({study,dirty,fingerprint}:Props){
          {rec.preview.notes.map((n,i)=><p key={i}>{n}</p>)}
          <p className="testlab-hash">SHA256 {rec.sha256}</p>
          <div className="testlab-entry-actions">
+           {rec.format!=='zip'&&<button type="button" className="outline-button" disabled={busy}
+             onClick={()=>setReviewId(current=>current===rec.id?'':rec.id)}>
+             {reviewId===rec.id?'세션 검수 닫기':'세션 결과 검수'}</button>}
            <button type="button" className="outline-button" disabled={busy} onClick={()=>void get(rec)}>
              <Download size={13}/> 원본 받기 (해시 확인)</button>
            <button type="button" className="outline-button" disabled={busy} onClick={()=>void remove(rec)}>
@@ -103,6 +109,8 @@ export default function ArenaIntake({study,dirty,fingerprint}:Props){
          </div>
        </article>)}
     </div>
+    <ArenaSessionReview record={records.find(rec=>rec.id===reviewId)||null}
+      study={study} dirty={dirty} fingerprint={fingerprint}/>
     <p className="testlab-note">이는 사용자가 선택한 파일의 **구조 검사·보관** 단계입니다. ZIP 내부 파일은 압축 해제하지 않으며, 파일 이름과 SHA256만으로 EDOPro 실행·무작위 셔플·듀얼 완료를 인증할 수 없습니다. 실제 스키마 확인 후 P6.1 후속 어댑터에서 결과를 대조합니다.</p>
   </section>;
 }
