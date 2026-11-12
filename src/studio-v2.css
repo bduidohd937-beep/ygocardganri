@@ -1,0 +1,44 @@
+/* YGO STUDIO UI V2.0 — source features remain untouched. */
+.studio-v2 .sidebar{width:238px;flex-basis:238px;transition:width .2s,flex-basis .2s}
+.studio-v2 .sidebar-content{padding:14px 10px;scrollbar-width:thin;scrollbar-color:#3f4855 transparent}
+.studio-v2 .brand{height:76px;padding:16px 14px;gap:12px}
+.studio-v2 .brand-symbol{flex:0 0 36px;width:36px;height:36px}
+.studio-v2 .brand strong{font-size:17px;letter-spacing:-.04em}
+.studio-v2 .brand small{font-size:9px;letter-spacing:.045em}
+.studio-v2 .brand-toggle{margin-left:auto;border:1px solid #39434f;color:#abb6c4;background:none;border-radius:5px;width:26px;height:26px;display:grid;place-items:center;flex:0 0 26px;cursor:pointer}
+.studio-v2 .sidebar-group{margin-bottom:5px}
+.studio-v2 .sidebar-group-title{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;background:none;border:0;color:#81909e;font:10px 'DM Mono',monospace;letter-spacing:.08em;text-align:left;cursor:pointer}
+.studio-v2 .sidebar-group-title:hover{color:#ebe4db}
+.studio-v2 .sidebar-group-title svg{transition:transform .18s}
+.studio-v2 .sidebar-group-title[aria-expanded="false"] svg{transform:rotate(-90deg)}
+.studio-v2 .nav-link{padding:8px 10px;margin:1px 0;min-height:35px;gap:10px;font-size:12px;border-radius:6px}
+.studio-v2 .nav-link:focus-visible,.studio-v2 .sidebar-group-title:focus-visible,.studio-v2 .brand-toggle:focus-visible,.studio-v2 button:focus-visible,.studio-v2 select:focus-visible{outline:2px solid #d3a096;outline-offset:2px}
+.studio-v2 .nav-link i{font-style:normal}
+.studio-v2 .sidebar-projects{margin-top:13px;padding-top:14px}
+.studio-v2 .sidebar-projects .sidebar-caption{margin-bottom:3px}
+.studio-v2 .project-link{padding:8px 8px}
+.studio-v2 .project-link small{display:block;color:#81909c;font-size:10px;line-height:1.6}
+.studio-v2 .sidebar--compact{width:73px;flex-basis:73px}
+.studio-v2 .sidebar--compact .brand{justify-content:center;padding:15px 8px}
+.studio-v2 .sidebar--compact .brand-text,
+.studio-v2 .sidebar--compact .sidebar-group-title .group-name,
+.studio-v2 .sidebar--compact .nav-label,
+.studio-v2 .sidebar--compact .nav-link .nav-chevron,
+.studio-v2 .sidebar--compact .sidebar-projects,
+.studio-v2 .sidebar--compact .sidebar-bottom div:not(.storage-dot),
+.studio-v2 .sidebar--compact .brand-toggle,
+.studio-v2 .sidebar--compact .sidebar-group-title svg{display:none}
+.studio-v2 .sidebar--compact .nav-link{justify-content:center;padding:10px 6px}
+.studio-v2 .sidebar--compact .sidebar-group-title{height:8px;padding:4px;margin:0;pointer-events:none}
+.studio-v2 .sidebar--compact .sidebar-bottom{justify-content:center}
+.studio-v2 .v2-sidebar-expand{display:none}
+.studio-v2 .sidebar--compact .v2-sidebar-expand{display:grid;width:34px;height:34px;border:1px solid #485465;border-radius:7px;background:#1a242f;color:#b9c4d1;place-items:center;margin:8px auto}
+.studio-v2 .topbar{padding:0 23px;gap:12px}
+.studio-v2 .topbar-left{gap:8px}
+.studio-v2 .topbar-right{gap:9px}
+.studio-v2 .v2-project-picker{display:flex;align-items:center;gap:7px}
+.studio-v2 .v2-project-picker select{max-width:204px;min-width:145px;background:#171e26;border:1px solid #3b4450;border-radius:6px;color:#e7e9e8;padding:8px 24px 8px 10px;font-size:12px;cursor:pointer}
+.studio-v2 .v2-project-caption{font-size:10px;color:#929ca9;white-space:nowrap}
+.studio-v2 .searchbox{width:238px}
+.studio-v2 .content--home{max-width:1440px}
+.studio-v2 .footer{font-size:10px}

@@ -2,8 +2,8 @@ import { lazy, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useR
 import type * as React from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import {
-  Activity, ArrowDownRight, ArrowLeft, ArrowRight, BookOpen, Check, CheckCircle2,
-  ChevronDown, ChevronRight, Clock3, Database, Download,
+  Activity, ArrowLeft, ArrowRight, BookOpen, Check, CheckCircle2,
+  ChevronDown, ChevronRight, Clock3, Database, Download, PanelLeftClose, PanelLeftOpen,
   FileQuestion, FileText, Filter, FolderOpen, GitCompareArrows,
   History, Layers3, LayoutGrid, Menu, Plus, Save, Search,
   Settings2, ShieldAlert, ShieldCheck, SlidersHorizontal, Upload,
@@ -25,29 +25,44 @@ import ImportedCardStudio from './ImportedCardStudio';
 import AuditCenter from './AuditCenter';
 import IntegrationModule from './IntegrationModule';
 import SharedLibrary from './SharedLibrary';
+const StudioHome=lazy(()=>import('./StudioHome'));
+import {
+  PROJECT_SCOPE_KEY, RECENT_PAGES_KEY, addRecent, parseRecentPages, parseSharedProjectStorage,
+  projectOptions, safeProjectSelection
+} from './studioV2Model';
+import type { StudioScope } from './studioV2Model';
+import './studio-v2.css';
 const DeckLab=lazy(()=>import('./DeckLab'));
 import { loadAllImportedRecords, restoreWorkbenchBackup, validateWorkbenchBackup } from './workbenchVault';
 import { buildCardIndex, searchCardIndex, visibleSlice, CARD_PAGE_SIZE, HISTORY_PAGE_SIZE } from './performance';
 
 type Page = 'home'|'themes'|'cards'|'studio'|'worlds'|'reviews'|'audit'|'files'|'decks'|'shared'|'artlab'|'cardmaker'|'designlab'|'arena'|'history'|'settings';
 type Notice = { text:string; kind:'success'|'error'|'info' };
-const NAV: { key:Page; name:string; group:'workspace'|'tools'; icon: typeof LayoutGrid }[] = [
-  {key:'home',name:'대시보드',group:'workspace',icon:LayoutGrid},
-  {key:'themes',name:'테마 라이브러리',group:'workspace',icon:BookOpen},
-  {key:'cards',name:'카드 라이브러리',group:'workspace',icon:Layers3},
-  {key:'worlds',name:'세계관 · 진화 계보',group:'workspace',icon:GitCompareArrows},
-  {key:'reviews',name:'검수 센터',group:'tools',icon:ShieldCheck},
-  {key:'audit',name:'오류 분석',group:'tools',icon:ShieldAlert},
-  {key:'files',name:'파일 센터',group:'tools',icon:FolderOpen},
-  {key:'decks',name:'덱 연구실',group:'tools',icon:Activity},
-  {key:'shared',name:'공통 카드·덱 보관함',group:'tools',icon:Database},
-  {key:'artlab',name:'이미지 연구소',group:'tools',icon:Image},
-  {key:'cardmaker',name:'카드 렌더러',group:'tools',icon:CreditCard},
-  {key:'designlab',name:'디자인·덱 실험실',group:'tools',icon:FlaskConical},
-  {key:'arena',name:'PSH 검증 관제실',group:'tools',icon:Swords},
-  {key:'history',name:'변경 이력',group:'tools',icon:History},
-  {key:'settings',name:'백업 · 설정',group:'tools',icon:Settings2},
+type NavGroup = 'home'|'create'|'research'|'manage';
+const NAV: { key:Page; name:string; group:NavGroup; icon: typeof LayoutGrid }[] = [
+  {key:'home',name:'대시보드',group:'home',icon:LayoutGrid},
+  {key:'themes',name:'테마 라이브러리',group:'home',icon:BookOpen},
+  {key:'cards',name:'카드 라이브러리',group:'create',icon:Layers3},
+  {key:'worlds',name:'세계관 · 진화 계보',group:'create',icon:GitCompareArrows},
+  {key:'artlab',name:'이미지 연구소',group:'create',icon:Image},
+  {key:'cardmaker',name:'카드 렌더러',group:'create',icon:CreditCard},
+  {key:'decks',name:'덱 연구실',group:'research',icon:Activity},
+  {key:'designlab',name:'디자인·덱 실험실',group:'research',icon:FlaskConical},
+  {key:'reviews',name:'검수 센터',group:'research',icon:ShieldCheck},
+  {key:'audit',name:'오류 분석',group:'research',icon:ShieldAlert},
+  {key:'arena',name:'PSH 검증 관제실',group:'research',icon:Swords},
+  {key:'shared',name:'공통 카드·덱 보관함',group:'manage',icon:Database},
+  {key:'files',name:'파일 센터',group:'manage',icon:FolderOpen},
+  {key:'history',name:'변경 이력',group:'manage',icon:History},
+  {key:'settings',name:'백업 · 설정',group:'manage',icon:Settings2},
 ];
+const NAV_GROUPS: {key:NavGroup;title:string}[] = [
+  {key:'home',title:'홈'},
+  {key:'create',title:'제작'},
+  {key:'research',title:'연구 · 검증'},
+  {key:'manage',title:'데이터 · 관리'},
+];
+const safeGet=(key:string)=>{try{return localStorage.getItem(key);}catch{return null;}};
 const UNKNOWN='미확인';
 const IS_PENDING = (card:Card)=>card.proposals.some(p=>p.status==='미승인');
 const byDate = (s:string)=> new Date(s).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
@@ -96,6 +111,10 @@ export default function App(){
   const [stageFilter,setStageFilter]=useState('all');
   const [notice,setNotice]=useState<Notice|null>(null);
   const [mobileNav,setMobileNav]=useState(false);
+  const [sidebarCompact,setSidebarCompact]=useState(()=>safeGet('ygo-studio-ui-v2-compact')==='1');
+  const [openNavGroups,setOpenNavGroups]=useState<Record<NavGroup,boolean>>({home:true,create:true,research:true,manage:true});
+  const [projectScope,setProjectScope]=useState<StudioScope>(()=>(safeGet(PROJECT_SCOPE_KEY)||'all') as StudioScope);
+  const [recentPages,setRecentPages]=useState<string[]>(()=>parseRecentPages(safeGet(RECENT_PAGES_KEY),NAV.map(p=>p.key)));
   const [activeTab,setActiveTab]=useState<'effect'|'lineage'|'history'>('effect');
   const [editBasic,setEditBasic]=useState(false);
   const [draft,setDraft]=useState<CardPatch>({});
@@ -139,10 +158,40 @@ export default function App(){
   const mutate=useCallback((action:(current:StudioData)=>StudioData)=>{
     setData(old=>{if(!old)return old;try{return action(old);}catch(e){inform(e instanceof Error?e.message:String(e),'error');return old;}});
   },[inform]);
-  const go=(target:Page)=>{setPage(target);setMobileNav(false);if(target!=='studio'){setEditBasic(false);setWorldDraft(null);}window.scrollTo({top:0,behavior:'smooth'});};
+  const go=(target:Page)=>{
+    setPage(target);setMobileNav(false);
+    const group=NAV.find(i=>i.key===target)?.group;
+    if(group)setOpenNavGroups(old=>old[group]?old:{...old,[group]:true});
+    if(target!=='studio'){setEditBasic(false);setWorldDraft(null);}
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
   const openImportedCard=(themeId:string,passcode:string)=>{setImportedCard({themeId,passcode});setPage('studio');setMobileNav(false);window.scrollTo({top:0,behavior:'smooth'});};
   const openCard=(cardId:string)=>{setImportedCard(null);setSelectedId(cardId);setPage('studio');setActiveTab('effect');setEditBasic(false);setProposalText('');setProposalMemo('');setMobileNav(false);window.scrollTo({top:0,behavior:'smooth'});};
   const openWorld=(id:string)=>{setSelectedWorld(id);setSelectedPhase(0);setWorldDraft(null);go('worlds');};
+  const sharedProjects=useMemo(()=>{
+    return parseSharedProjectStorage(safeGet('ygo-studio-shared-catalog-v1'));
+  },[page]);
+  const studioProjects=projectOptions(data?.cards.length??0,sharedProjects.projects);
+  const activeProject=safeProjectSelection(projectScope,studioProjects);
+  const changeProject=(scope:StudioScope)=>{
+    setProjectScope(scope);
+    try{localStorage.setItem(PROJECT_SCOPE_KEY,scope);}catch{/* 저장 불가 시 현재 탭에서만 변경 */}
+    go('home');
+  };
+  const toggleCompact=()=>{
+    setSidebarCompact(old=>{
+      try{localStorage.setItem('ygo-studio-ui-v2-compact',old?'0':'1');}catch{/* 선택 상태 유지 */}
+      return !old;
+    });
+  };
+  useEffect(()=>{
+    if(page==='home')return;
+    setRecentPages(old=>{
+      const updated=addRecent(old,page,NAV.map(i=>i.key));
+      try{localStorage.setItem(RECENT_PAGES_KEY,JSON.stringify(updated));}catch{/* 최근 기록은 탭 내 유지 */}
+      return updated;
+    });
+  },[page]);
   const selected=data?.cards.find(c=>c.id===selectedId)??data?.cards[0];
   const selectedRealm=data?.worlds.find(w=>w.id===selectedWorld)??data?.worlds[0];
   const counts=useMemo(()=>{
@@ -229,44 +278,48 @@ export default function App(){
     }
   };
 
-  if(!data)return <div className="loading-screen"><div className="brand-mark">Y</div><strong>YGO CARD STUDIO</strong><span>기록 보관소를 여는 중...</span></div>;
+  if(!data)return <div className="loading-screen"><div className="brand-mark">Y</div><strong>YGO STUDIO</strong><span>작업실을 여는 중...</span></div>;
 
   const pendingCards=data.cards.filter(IS_PENDING);
 
-  return <div className="shell">
-    <aside className={`sidebar ${mobileNav?'sidebar--open':''}`}>
-      <div className="brand"><div className="brand-symbol">✣</div><div><strong>YGO<span> / </span>STUDIO</strong><small>CUSTOM CARD WORKSPACE</small></div><button className="mobile-close" onClick={()=>setMobileNav(false)} aria-label="메뉴 닫기"><X size={17}/></button></div>
+  return <div className="shell studio-v2">
+    <aside className={`sidebar ${mobileNav?'sidebar--open':''} ${sidebarCompact?'sidebar--compact':''}`}>
+      <div className="brand">
+        <div className="brand-symbol">✣</div>
+        <div className="brand-text"><strong>YGO STUDIO</strong><small>CUSTOM DEVELOPMENT WORKSPACE</small></div>
+        <button className="brand-toggle" onClick={toggleCompact} title={sidebarCompact?'메뉴 펼치기':'메뉴 접기'} aria-label={sidebarCompact?'메뉴 펼치기':'메뉴 접기'}><PanelLeftClose size={16}/></button>
+        <button className="mobile-close" onClick={()=>setMobileNav(false)} aria-label="메뉴 닫기"><X size={17}/></button>
+      </div>
       <div className="sidebar-content">
-        <div className="sidebar-caption">WORKSPACE <span>01</span></div>
-        {NAV.filter(i=>i.group==='workspace').map(i=><button key={i.key} className={`nav-link ${page===i.key?'nav-link--active':''}`} onClick={()=>go(i.key)}><i.icon size={17} strokeWidth={1.7}/><span>{i.name}</span>{page===i.key&&<ChevronRight size={14}/>}</button>)}
-        <div className="sidebar-caption sidebar-caption--second">TOOLS <span>02</span></div>
-        {NAV.filter(i=>i.group==='tools').map(i=><button key={i.key} className={`nav-link ${page===i.key?'nav-link--active':''}`} onClick={()=>go(i.key)}><i.icon size={17} strokeWidth={1.7}/><span>{i.name}</span>{i.key==='reviews'&&counts.pending>0&&<em>{counts.pending}</em>}</button>)}
-        <div className="sidebar-projects"><div className="sidebar-caption">PROJECTS</div><button className="project-link" onClick={()=>go('themes')}><span className="project-orb">✦</span><span><strong>종언성서 — 녹투르나</strong><small>무명성서 · 세계 5</small></span></button></div>
+        {sidebarCompact&&<button className="v2-sidebar-expand" aria-label="메뉴 펼치기" onClick={toggleCompact}><PanelLeftOpen size={18}/></button>}
+        {NAV_GROUPS.map(group=><section className="sidebar-group" key={group.key} aria-label={group.title}>
+          <button className="sidebar-group-title" aria-expanded={openNavGroups[group.key]} aria-controls={`nav-group-${group.key}`} onClick={()=>setOpenNavGroups(current=>({...current,[group.key]:!current[group.key]}))}>
+            <span className="group-name">{group.title.toUpperCase()}</span><ChevronDown size={14}/>
+          </button>
+          {openNavGroups[group.key]&&<div id={`nav-group-${group.key}`}>
+            {NAV.filter(i=>i.group===group.key).map(i=><button key={i.key} title={i.name} aria-current={page===i.key?'page':undefined} className={`nav-link ${page===i.key?'nav-link--active':''}`} onClick={()=>go(i.key)}><i.icon size={17} strokeWidth={1.7}/><span className="nav-label">{i.name}</span>{i.key==='reviews'&&counts.pending>0&&<em>{counts.pending}</em>}{page===i.key&&<ChevronRight className="nav-chevron" size={14}/>}</button>)}
+          </div>}
+        </section>)}
+        <div className="sidebar-projects">
+          <div className="sidebar-caption">CURRENT PROJECT</div>
+          <button className="project-link" onClick={()=>go('home')}><span className="project-orb">✦</span><span><strong>{studioProjects.find(p=>p.key===activeProject)?.name}</strong><small>전환은 대시보드 · 공통 자료 탐색 기준</small></span></button>
+        </div>
       </div>
       <div className="sidebar-bottom"><div className="storage-dot"/><div><strong>로컬 워크스페이스</strong><span>{storageMode} · {savePhase==='pending'?'저장 대기':savePhase==='writing'?'저장 중':savePhase==='error'?'저장 실패':'저장 완료'}</span></div><button onClick={()=>go('settings')} aria-label="백업 설정"><Settings2 size={16}/></button></div>
     </aside>
     {mobileNav&&<div className="mobile-scrim" onClick={()=>setMobileNav(false)}/>}
     <div className="main-area">
-      <header className="topbar"><div className="topbar-left"><button className="mobile-menu" onClick={()=>setMobileNav(true)} aria-label="메뉴 열기"><Menu size={21}/></button><span>PERSONAL WORKSPACE</span><ChevronRight size={13}/><strong>{page==='studio'?'카드 스튜디오':NAV.find(x=>x.key===page)?.name}</strong></div>
-        <div className="topbar-right"><div className="searchbox"><Search size={16}/><input ref={globalSearch} value={search} onFocus={()=>{if(page!=='cards'&&page!=='studio')go('cards');}} onChange={e=>{setSearch(e.target.value);if(page!=='cards')go('cards');}} placeholder="카드명·세계·효과 검색" aria-label="카드 검색"/><kbd>⌘ K</kbd></div><button className="top-action" onClick={exportBackup} title="JSON 전체 백업"><Download size={18}/></button></div>
+      <header className="topbar"><div className="topbar-left"><button className="mobile-menu" onClick={()=>setMobileNav(true)} aria-label="메뉴 열기"><Menu size={21}/></button><span>YGO STUDIO</span><ChevronRight size={13}/><strong>{page==='studio'?'카드 스튜디오':NAV.find(x=>x.key===page)?.name}</strong></div>
+        <div className="topbar-right"><label className="v2-project-picker" title="프로젝트 전환: 대시보드·공통 자료 탐색 범위">
+          <span className="v2-project-caption">프로젝트</span>
+          <select aria-label="현재 프로젝트 선택" value={activeProject} onChange={e=>changeProject(e.target.value as StudioScope)}>{studioProjects.map(p=><option key={p.key} value={p.key}>{p.name}</option>)}</select>
+        </label><div className="searchbox"><Search size={16}/><input ref={globalSearch} value={search} onFocus={()=>{if(page!=='cards'&&page!=='studio')go('cards');}} onChange={e=>{setSearch(e.target.value);if(page!=='cards')go('cards');}} placeholder="카드명·세계·효과 검색" aria-label="카드 검색"/><kbd>⌘ K</kbd></div><button className="top-action" onClick={exportBackup} title="JSON 전체 백업"><Download size={18}/></button></div>
       </header>
       {saveError&&<div className="error-banner"><AlertCircle size={16}/>{saveError}<button onClick={exportBackup}>백업 내보내기</button></div>}
       <main className={`content content--${page}`}>
-        {page==='home'&&<>
-          <div className="page-eyebrow"><span className="red-dot"/> PROJECTS / 001 <span className="eyebrow-rule"/> LIVE WORKSPACE</div>
-          <section className="hero"><div className="hero-top"><span>FEATURED COLLECTION</span><span>01 — 06 / ORIGINAL WORLD</span></div><div className="hero-body"><div className="hero-copy"><div className="hero-overline">NOCTURNA · NAMELESS SCRIPTURE</div><h1>종언성서<span> — </span><br/>녹투르나</h1><p>다섯 세계에서 고난을 겪은 아벨. 세계관과 카드 설계, 원문과 검증 기록을 연결하는 제작 원장.</p><div className="hero-actions"><button className="primary-button" onClick={()=>go('themes')}>프로젝트 탐색 <ArrowRight size={16}/></button><button className="outline-button" onClick={()=>go('cards')}>카드 라이브러리 <ArrowDownRight size={16}/></button></div></div>
-            <div className="hero-art" aria-hidden="true"><div className="hero-constellation"><span className="constellation-center">✧</span><i className="ring-one"/><i className="ring-two"/><i className="ring-three"/></div><span className="hero-art-caption">VOL. VI · THE LAST SCRIPTURE</span></div>
-          </div></section>
-          <div className="metrics-row"><MiniMetric label="확정 세계" value="05" foot="고유 세계관"/><MiniMetric label="초기 카드 원장" value={data.cards.length.toString().padStart(2,'0')} foot="미확인 진화 문서 포함"/><MiniMetric label="승인 대기 제안" value={counts.pending.toString().padStart(2,'0')} foot="미승인 효과 변경" accent={counts.pending>0}/><MiniMetric label="미확인 필드" value={counts.unknown} foot="주요 카드 속성 합계"/></div>
-          <SectionTitle index="01" title="다섯 세계 · 기록 보관소" aside="THE FIVE REALMS"/>
-          <div className="realm-grid">{data.worlds.map((w,index)=><button className="realm-tile" key={w.id} style={{'--realm':w.accent} as React.CSSProperties} onClick={()=>openWorld(w.id)}><div className="realm-art"><span className="realm-monogram">{['Ⅰ','Ⅱ','Ⅲ','Ⅳ','Ⅴ'][index]}</span><span className="realm-engrave">{w.shortLabel}</span></div><div className="realm-detail"><span>WORLD / {String(index+1).padStart(2,'0')}</span><strong>{w.name}</strong><small>{w.mechanism}</small><span className="realm-footer">계보 열기 <ArrowRight size={14}/></span></div></button>)}</div>
-          <SectionTitle index="02" title="현재 작업 대기열" aside="REAL DATA / NO ESTIMATES"/>
-          <div className="bottom-grid"><div className="queue-panel"><div className="panel-head"><h3>검토와 수정</h3><button onClick={()=>go('reviews')}>모두 보기 <ArrowRight size={14}/></button></div>
-            {pendingCards.length===0?<Empty icon={<CheckCircle2 size={24}/>} title="대기 중인 효과 제안 없음" detail="승인할 제안이 생기면 여기에 표시돼요."/>:pendingCards.slice(0,3).map(c=><button className="queue-item" onClick={()=>openCard(c.id)} key={c.id}><span className="queue-icon"><FileText size={17}/></span><span><strong>{displayName(c)}</strong><small>미승인 제안 {c.proposals.filter(p=>p.status==='미승인').length}건</small></span><ChevronRight size={16}/></button>)}
-          </div><div className="queue-panel"><div className="panel-head"><h3>최근 변경 이력</h3><button onClick={()=>go('history')}>전체 이력 <ArrowRight size={14}/></button></div>
-            {data.history.length===0?<Empty icon={<History size={24}/>} title="아직 변경 이력 없음" detail="카드를 편집하거나 제안을 승인하면 여기에 기록됩니다."/>:data.history.slice(0,3).map(h=><div key={h.id} className="history-mini"><span className="timeline-dot"/><div><strong>{h.action}</strong><small>{h.entityName} · {byDate(h.at)}</small></div></div>)}
-          </div></div>
-        </>}
+        {page==='home'&&<Suspense fallback={<div className="not-yet">YGO STUDIO 대시보드를 불러오는 중...</div>}><StudioHome data={data} counts={counts} pendingCards={pendingCards} scope={activeProject} projects={studioProjects} sharedCatalog={sharedProjects.catalog}
+          recentPages={recentPages.map(key=>NAV.find(p=>p.key===key)).filter((item):item is typeof NAV[number]=>!!item).map(item=>({key:item.key as 'home'|'themes'|'cards'|'worlds'|'reviews'|'decks'|'shared'|'artlab'|'cardmaker'|'designlab'|'arena'|'history',name:item.name}))}
+          onNavigate={go} onScopeChange={changeProject} onOpenWorld={openWorld} onOpenCard={openCard}/></Suspense>}
         {page==='themes'&&<><PageHeading eyebrow="PROJECT LIBRARY / 001" title="테마 라이브러리" subtitle="서로 다른 세계와 카드군을 하나의 제작 원장으로 관리합니다."/><div className="feature-theme"><div><span className="micro-label">PROJECT 001 / ACTIVE</span><h2>종언성서 — 녹투르나</h2><p>최종 테마 《무명성서》를 중심으로 다섯 세계의 카드·설정·진화 계보를 관리합니다.</p><div className="feature-tags"><span>세계 5</span><span>초기 카드 {data.cards.length}</span><span>확정 하급 아벨 5</span></div></div><div className="feature-theme-deco">✧</div></div>
           <SectionTitle index="A" title="세계별 설계 원장" aside="SELECT A WORLD"/>
           <div className="theme-grid">{data.worlds.map((w,i)=><button key={w.id} className="theme-world" onClick={()=>openWorld(w.id)} style={{'--realm':w.accent} as React.CSSProperties}><div className="theme-world-top"><span>0{i+1} / {w.shortLabel}</span><ArrowRight size={18}/></div><div className="theme-world-sigil">{['✧','◷','◈','⌁','⌘'][i]}</div><strong>{w.name}</strong><small>{w.concept}</small><div className="theme-world-bottom">레벨 4 아벨 등록 <Check size={15}/></div></button>)}</div>
@@ -312,7 +365,7 @@ export default function App(){
         {page==='audit'&&<AuditCenter onOpenCard={openImportedCard}/>}
         {page==='files'&&<FileCenter view="files" onOpenCard={openImportedCard}/>}
         {page==='decks'&&<><PageHeading eyebrow="DECK LAB / P5" title="덱 연구실" subtitle="YDK 원본과 분석안을 분리해 40~60장 구성·초동 패 확률·매수 시나리오를 연구합니다."/><Suspense fallback={<div className="not-yet">덱 연구실을 불러오는 중...</div>}><DeckLab/></Suspense></>}
-        {page==='shared'&&<SharedLibrary onOpenModule={target=>go(target)}/>}
+        {page==='shared'&&<SharedLibrary onOpenModule={target=>go(target)} initialFilter={activeProject.startsWith('shared:')?activeProject.slice(7):''}/>}
         {page==='artlab'&&<IntegrationModule moduleId="artlab"/>}
         {page==='cardmaker'&&<IntegrationModule moduleId="cardmaker"/>}
         {page==='designlab'&&<IntegrationModule moduleId="designlab"/>}
@@ -320,7 +373,7 @@ export default function App(){
         {page==='history'&&<><PageHeading eyebrow="CHANGE HISTORY / AUDIT LOG" title="변경 이력" subtitle="승인된 카드 원문과 제안, 카드 정보 및 세계관 수정 기록을 추적합니다."/><div className="history-list">{data.history.length===0?<Empty icon={<History size={28}/>} title="기록이 비어 있습니다" detail="카드 정보 수정과 효과 제안, 승인 결과가 이곳에 쌓입니다."/>:shownHistory.map(h=><HistoryItem key={h.id} item={h}/>)}</div>{shownHistory.length<data.history.length&&<div className="more-results"><span>{shownHistory.length.toLocaleString('ko-KR')} / {data.history.length.toLocaleString('ko-KR')}건 표시</span><button className="outline-button" onClick={()=>setHistoryLimit(n=>n+HISTORY_PAGE_SIZE)}>다음 이력 {Math.min(HISTORY_PAGE_SIZE,data.history.length-shownHistory.length)}건 보기 <ChevronDown size={16}/></button></div>}</>}
         {page==='settings'&&<><PageHeading eyebrow="DATA MANAGEMENT" title="백업 · 설정" subtitle="자료는 현재 브라우저에 저장됩니다. 중요한 변경 사항은 정기적으로 JSON 백업을 받아 보관하세요."/><div className="settings-grid"><div className="settings-panel"><Database size={25}/><h2>데이터 보관</h2><p>현재 저장 방식: <strong>{storageMode}</strong></p><small>서버 동기화는 구현되지 않았습니다. 다른 기기에서는 JSON 백업을 가져와야 합니다. 브라우저 데이터 삭제 시 복구할 수 없습니다.</small></div><div className="settings-panel"><Download size={25}/><h2>백업 내보내기</h2><p>《녹투르나》 설계 카드 16종과 효과 제안·승인·변경 이력 JSON을 내보냅니다. 외부 테마 작업 문서는 별도 백업합니다.</p><button className="primary-button" onClick={exportBackup}><Download size={16}/> 녹투르나 설계 JSON 내보내기</button></div><div className="settings-panel"><Upload size={25}/><h2>백업 가져오기</h2><p>구조가 유효한 V1 백업만 읽습니다. 기존 데이터를 교체하기 전에 확인합니다.</p><input ref={filePicker} type="file" accept="application/json,.json" onChange={e=>void importBackup(e.target.files?.[0]??null)} hidden/><button className="outline-button" onClick={()=>filePicker.current?.click()}><Upload size={16}/> JSON 불러오기</button></div><div className="settings-panel"><FileText size={25}/><h2>외부 테마 작업 문서 백업</h2><p>코스모코드 등 업로드 카드의 설계 메모, 승인 효과, 제안·검수·변경 이력을 JSON으로 저장합니다. 원본 바이너리는 제외됩니다.</p><button className="primary-button" onClick={()=>void exportWorkbench()}><Download size={16}/> 작업 문서 내보내기</button><input ref={workbenchPicker} type="file" accept=".json,application/json" hidden onChange={e=>void importWorkbench(e.target.files?.[0]??null)}/><button className="outline-button" onClick={()=>workbenchPicker.current?.click()}><Upload size={16}/> 작업 문서 복원</button></div><div className="settings-panel settings-panel--danger"><ShieldAlert size={25}/><h2>초기 데이터 복원</h2><p>진행 중인 변경 사항이 사라집니다. 먼저 백업을 저장하세요.</p><button className="danger-button" onClick={reset}>초기 상태로 되돌리기</button></div></div><div className="note-line"><Info size={16}/>V2 독립형 HTML 백업은 구조가 다릅니다. V2 → 신규 스키마 이관기는 별도 검증 후 추가합니다.</div></>}
       </main>
-      <footer className="footer"><span>YGO CARD STUDIO <em>ALPHA / 0.6.3</em></span><span>확정과 검증은 별도 상태 · 미확인 정보는 추정하지 않습니다.</span></footer>
+      <footer className="footer"><span>YGO STUDIO <em>UI V2.0</em></span><span>확정과 검증은 별도 상태 · 미확인 정보는 추정하지 않습니다.</span></footer>
     </div>
     {notice&&<div className={`toast toast--${notice.kind}`} role="status">{notice.kind==='success'?<CheckCircle2 size={17}/>:notice.kind==='error'?<AlertCircle size={17}/>:<Info size={17}/>}<span>{notice.text}</span><button onClick={()=>setNotice(null)} aria-label="알림 닫기"><X size={15}/></button></div>}
   </div>;
