@@ -82,6 +82,23 @@ test('P6: imported YDK → saved study → manual EDOPro result and .yrpX eviden
   expect(records.records).toHaveLength(2);
   expect(records.records.some((r:{replay?:{sha256:string}})=>r.replay?.sha256===digest)).toBe(true);
   expect(JSON.stringify(records)).not.toContain('YRPX_TEST_FIXTURE');
+  // P6.0.1: a metadata backup can be restored without replacing the P5 study or original YDK.
+  await restored.getByRole('button',{name:'기록 삭제'}).first().click();
+  await restored.getByRole('button',{name:'기록 삭제'}).first().click();
+  await expect(restored.locator('.testlab-entry')).toHaveCount(0);
+  await restored.getByLabel('EDOPro 테스트 기록 JSON 가져오기').setInputFiles((await backup.path())!);
+  await expect(restored.locator('.testlab-entry')).toHaveCount(2);
+  await expect(restored.locator('.testlab-stats>div').nth(2)).toContainText('1건');
+  await expect(restored.getByText('리플레이 바이너리는 복원되지 않았습니다.',{exact:false})).toBeVisible();
+
+  // Restored descriptors are not mistaken for actual replay files.
+  await restored.getByRole('button',{name:'리플레이 받기'}).click();
+  await expect(restored.getByRole('alert')).toContainText('리플레이 원본을 찾지 못했습니다');
+
+  // Re-import is idempotent and never clears existing evidence.
+  await restored.getByLabel('EDOPro 테스트 기록 JSON 가져오기').setInputFiles((await backup.path())!);
+  await expect(restored.getByText('기존과 동일 2건',{exact:false})).toBeVisible();
+  await expect(restored.locator('.testlab-entry')).toHaveCount(2);
   await page.locator('.sidebar .nav-link').filter({hasText:'파일 센터'}).click();
   await page.locator('.fc-file-select select').selectOption({label:'P6 EDOPro 실전 테스트'});
   await expect(page.locator('.fc-index-list')).toContainText('메인 40');

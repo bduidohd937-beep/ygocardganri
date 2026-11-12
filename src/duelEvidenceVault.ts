@@ -1,5 +1,5 @@
 /** Dedicated browser-local P6 store; does not touch YDK, cards, Lua or P5 studies. */
-import { validateDuelRecord } from './duelEvidence';
+import { validateDuelRecord,validateEvidenceBackup } from './duelEvidence';
 import type { DuelEvidenceRecord } from './duelEvidence';
 
 const DATABASE='ygo_card_studio_engine_evidence';
@@ -70,5 +70,46 @@ export async function removeDuelEvidence(id:string):Promise<void>{
     tx.oncomplete=()=>resolve();
     tx.onerror=()=>reject(tx.error||new Error('기록 삭제 실패'));
     tx.onabort=()=>reject(tx.error||new Error('기록 삭제 취소'));
+  });}finally{db.close();}
+}
+
+
+/**
+ * P6.0.1: import metadata backups without overwriting existing records or replay blobs.
+ * An imported replay descriptor never implies that its binary file was restored.
+ */
+export async function mergeDuelEvidenceBackup(payload:unknown):Promise<{added:number;unchanged:number}>{
+  if(!validateEvidenceBackup(payload))throw new Error('EDOPro 테스트 기록 JSON 백업 형식이 유효하지 않습니다.');
+  const db=await dbOpen();
+  try{return await new Promise<{added:number;unchanged:number}>((resolve,reject)=>{
+    const tx=db.transaction(RECORDS,'readwrite');
+    const store=tx.objectStore(RECORDS);
+    let added=0,unchanged=0,reason='EDOPro 테스트 기록 복원을 취소했습니다.';
+    const request=store.getAll();
+    request.onsuccess=()=>{
+      const existing:unknown=request.result;
+      if(!Array.isArray(existing)||existing.length>3000||!existing.every(validateDuelRecord)){
+        reason='기존 테스트 기록에 오류가 있어 안전하게 복원을 중단했습니다.';tx.abort();return;
+      }
+      const byId=new Map(existing.map(r=>[r.id,r]));
+      const incoming=payload.records.filter(r=>!byId.has(r.id));
+      if(existing.length+incoming.length>3000){
+        reason='테스트 기록 총 3000건 제한을 초과하여 복원을 중단했습니다.';tx.abort();return;
+      }
+      for(const record of payload.records){
+        const old=byId.get(record.id);
+        if(old){
+          if(JSON.stringify(old)!==JSON.stringify(record)){
+            reason='동일한 기록 ID에 서로 다른 데이터가 있습니다. 덮어쓰지 않았습니다.';tx.abort();return;
+          }
+          unchanged++;
+        }else{
+          store.add(record);added++;
+        }
+      }
+    };
+    tx.oncomplete=()=>resolve({added,unchanged});
+    tx.onerror=()=>reject(tx.error||new Error(reason));
+    tx.onabort=()=>reject(new Error(reason));
   });}finally{db.close();}
 }
