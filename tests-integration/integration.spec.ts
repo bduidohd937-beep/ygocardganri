@@ -8,9 +8,9 @@ test('V2.3: 네 작업실을 한 사이트의 전체 화면으로 전환하고 �
     await page.getByRole('button',{name,exact:true}).click();
     await expect(page.getByRole('button',{name:'스튜디오로 돌아가기'})).toBeVisible();
     await expect(page.locator('.sidebar')).toHaveCount(0);
-    await expect(page.locator('.topbar')).toHaveCount(0);
-    await expect(page.locator('.content')).toHaveCount(0);
-    await expect(page.locator('.footer')).toHaveCount(0);
+    await expect(page.locator('.studio-v2 > .main-area > .topbar')).toHaveCount(0);
+    await expect(page.locator('.studio-v2 .content')).toHaveCount(0);
+    await expect(page.locator('.studio-v2 .footer')).toHaveCount(0);
     const shell=page.locator('.studio-fullscreen');
     await expect(shell).toBeVisible();
     const bounds=await shell.boundingBox();
