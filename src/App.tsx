@@ -24,6 +24,7 @@ import FileCenter from './FileCenter';
 import ImportedCardStudio from './ImportedCardStudio';
 import AuditCenter from './AuditCenter';
 import './fullscreen-workspace.css';
+import { applyStudioThemeToFrame } from './studioTheme';
 const NativeWorkspace=lazy(()=>import('./NativeWorkspace'));
 
 import SharedLibrary from './SharedLibrary';
@@ -307,7 +308,8 @@ export default function App(){
         {target?<Suspense fallback={<div className="studio-fullscreen-loading">작업실을 불러오는 중...</div>}><NativeWorkspace target={target} fullscreen/></Suspense>:
           <iframe className="studio-fullscreen-legacy" title={toolName}
             src={base+'modules/'+(page==='designlab'?'designlab':'arena')+'/'}
-            referrerPolicy="no-referrer" />}
+            referrerPolicy="no-referrer"
+            onLoad={event=>applyStudioThemeToFrame(event.currentTarget,page==='designlab'?'designlab':'arena')} />}
       </main>
     </div>;
   }
