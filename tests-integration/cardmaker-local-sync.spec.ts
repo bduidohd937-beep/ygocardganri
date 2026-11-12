@@ -18,7 +18,7 @@ test('로컬 ZIP과 동일한 카드메이커를 YGO STUDIO에서 실행한다',
   await expect(tool.getByText('토큰은 효과로 소환되는 카드입니다.', { exact: false })).toBeVisible();
 
   // 로컬 ZIP에는 crop editor도 포함. 데이터 없는 기본 일러스트에서 기능 확인만 한다.
-  const tab = tool.getByRole('button', { name: '일러스트', exact: true });
+  const tab = tool.getByRole('tab', { name: '일러스트', exact: true });
   await tab.click();
   await expect(tool.getByRole('button', { name: '고급 자르기 · 영역 직접 선택' })).toBeVisible();
 });
