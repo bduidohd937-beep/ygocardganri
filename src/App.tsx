@@ -3,7 +3,7 @@ import type * as React from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import {
   Activity, ArrowLeft, ArrowRight, BookOpen, Check, CheckCircle2,
-  ChevronDown, ChevronRight, Database, Download, PanelLeftClose, PanelLeftOpen,
+  ChevronDown, ChevronRight, Clock3, Database, Download, PanelLeftClose, PanelLeftOpen,
   FileQuestion, FileText, Filter, FolderOpen, GitCompareArrows,
   History, Layers3, LayoutGrid, Menu, Plus, Save, Search,
   Settings2, ShieldAlert, ShieldCheck, SlidersHorizontal, Upload,
@@ -93,6 +93,10 @@ function ArtSlot({card,world,large=false}:{card:Card;world?:World;large?:boolean
 
 function Empty({title,detail,icon}:{title:string;detail?:string;icon?:ReactNode}){
   return <div className="empty-state">{icon??<FileQuestion size={26}/>}<strong>{title}</strong>{detail&&<p>{detail}</p>}</div>;
+}
+
+function MiniMetric({label,value,foot,accent}:{label:string;value:string|number;foot:string;accent?:boolean}){
+  return <div className="metric"><span className="micro-label">{label}</span><div className={`metric-number ${accent?'metric-number--accent':''}`}>{value}</div><span className="metric-foot">{foot}</span></div>;
 }
 
 export default function App(){
