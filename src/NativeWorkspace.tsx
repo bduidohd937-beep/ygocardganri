@@ -93,7 +93,7 @@ async function loadAssetEngine(base:string):Promise<void>{
     document.head.appendChild(script);
   });
 }
-async function mountArtLab(host:HTMLElement):Promise<Handle>{
+async function mountArtLab(host:HTMLElement,isCancelled:()=>boolean):Promise<Handle|null>{
   const base=baseUrl(),url=base+'modules/artlab/';
   const [htmlResponse,cssResponse]=await Promise.all([fetch(url+'index.html'),fetch(url+'styles.css')]);
   if(!htmlResponse.ok||!cssResponse.ok)throw Error('이미지 연구소 원본 자료를 불러오지 못했습니다.');
@@ -103,6 +103,7 @@ async function mountArtLab(host:HTMLElement):Promise<Handle>{
   if(!app||!toast||!doc.getElementById('art-canvas'))throw Error('원본 이미지 생성기 구조가 예상과 다릅니다.');
   app.querySelector('.topbar')?.remove();
   app.querySelector('.footer')?.remove();
+  if(isCancelled())return null;
   const shadow=host.shadowRoot??host.attachShadow({mode:'open'});
   shadow.replaceChildren();
   const style=document.createElement('style');
@@ -110,14 +111,16 @@ async function mountArtLab(host:HTMLElement):Promise<Handle>{
     +css+'\n:host .shell{max-width:none;margin:0;padding:0 0 24px}:host .hero{padding-top:10px}:host .workspace{margin-top:13px}:host .ambient{display:none}';
   shadow.append(style,app,toast);
   await loadAssetEngine(base);
+  if(isCancelled()){if(shadow.contains(app))shadow.replaceChildren();return null;}
   const mod:NativeModule=await import(/* @vite-ignore */ url+'native.js');
   if(typeof mod.mountArtLab!=='function')throw Error('이미지 연구소 네이티브 모듈을 찾지 못했습니다.');
   const cleanup=mod.mountArtLab(shadow);
-  return {root:shadow,unmount:()=>{cleanup();shadow.replaceChildren();}};
+  return {root:shadow,unmount:()=>{cleanup();if(shadow.contains(app))shadow.replaceChildren();}};
 }
-async function mountMaker(host:HTMLElement):Promise<Handle>{
+async function mountMaker(host:HTMLElement,isCancelled:()=>boolean):Promise<Handle|null>{
   const mod:NativeModule=await import(/* @vite-ignore */ baseUrl()+'modules/cardmaker/embed/cardmaker.js');
   if(typeof mod.mountCardMaker!=='function')throw Error('카드 렌더러의 React 모듈이 없습니다.');
+  if(isCancelled())return null;
   return mod.mountCardMaker(host);
 }
 /** Native same-origin DOM workspaces. No iframe or nested application navigation. */
@@ -134,7 +137,8 @@ export default function NativeWorkspace({target}:{target:Target}){
     setReady(false);setError('');setMessage('');setHandoff(savedHandoff(target));
     const container=host.current;
     if(!container)return;
-    (target==='artlab'?mountArtLab(container):mountMaker(container)).then(instance=>{
+    (target==='artlab'?mountArtLab(container,()=>cancelled):mountMaker(container,()=>cancelled)).then(instance=>{
+      if(!instance)return;
       if(cancelled){instance.unmount();return;}
       mounted.current=instance;setReady(true);
     }).catch(e=>{if(!cancelled)setError('작업실 로딩 실패: '+String(e));});
@@ -165,6 +169,8 @@ export default function NativeWorkspace({target}:{target:Target}){
     {!!error&&<div className="native-workspace-error" role="alert">{error}</div>}
     {!ready&&!error&&<div className="native-workspace-loading"><Layers3 size={18}/> 원본 제작 엔진을 준비하는 중...</div>}
     <div ref={host} className="native-workspace-mount" data-native-tool={target}/>
-    <p className="native-workspace-foot">파일·카드 제작은 이 사이트 안에서 실행합니다. 기존 저장 데이터는 그대로 유지되며, 카드 효과 승인·EDOPro 대전 결과를 자동 갱신하지 않습니다.</p>
+    <p className="native-workspace-foot">파일·카드 제작은 이 사이트 안에서 실행합니다. 기존 저장 데이터는 그대로 유지되며, 카드 효과 승인·EDOPro 대전 결과를 자동 갱신하지 않습니다.
+      {target==='artlab'&&<> · SVG 출처: Lorc / Delapouite (Game-icons, CC BY 3.0) · <a href={baseUrl()+'modules/artlab/assets/오픈에셋_출처와_라이선스.md'} target="_blank" rel="noopener noreferrer">저작자·라이선스 원문</a></>}
+    </p>
   </section>;
 }
