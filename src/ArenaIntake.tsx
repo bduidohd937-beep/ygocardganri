@@ -105,3 +105,4 @@ export default function ArenaIntake({study,dirty,fingerprint}:Props){
     </div>
     <p className="testlab-note">이는 사용자가 선택한 파일의 **구조 검사·보관** 단계입니다. ZIP 내부 파일은 압축 해제하지 않으며, 파일 이름과 SHA256만으로 EDOPro 실행·무작위 셔플·듀얼 완료를 인증할 수 없습니다. 실제 스키마 확인 후 P6.1 후속 어댑터에서 결과를 대조합니다.</p>
   </section>;
+}
