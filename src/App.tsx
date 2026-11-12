@@ -361,7 +361,7 @@ export default function App(){
         {page==='audit'&&<AuditCenter onOpenCard={openImportedCard}/>}
         {page==='files'&&<FileCenter view="files" onOpenCard={openImportedCard}/>}
         {page==='decks'&&<><PageHeading eyebrow="DECK LAB / P5" title="덱 연구실" subtitle="YDK 원본과 분석안을 분리해 40~60장 구성·초동 패 확률·매수 시나리오를 연구합니다."/><Suspense fallback={<div className="not-yet">덱 연구실을 불러오는 중...</div>}><DeckLab/></Suspense></>}
-        {page==='shared'&&<SharedLibrary onOpenModule={target=>go(target)}/>}
+        {page==='shared'&&<SharedLibrary onOpenModule={target=>go(target)} initialFilter={activeProject.startsWith('shared:')?activeProject.slice(7):''}/>}
         {page==='artlab'&&<IntegrationModule moduleId="artlab"/>}
         {page==='cardmaker'&&<IntegrationModule moduleId="cardmaker"/>}
         {page==='designlab'&&<IntegrationModule moduleId="designlab"/>}
