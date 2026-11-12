@@ -8,6 +8,7 @@ import type { MigrationInspection } from './migrationModel';
 import { fetchOriginal,hashFile,listMigrationEntries,markEntryChecked,saveOriginal,verifyOriginal,buildMigrationManifest } from './migrationVault';
 import type { MigrationEntry } from './migrationVault';
 import type { StudioData } from './data';
+import StudioSnapshot from './StudioSnapshot';
 import './migration-center.css';
 
 type Pending={file:File;hash:string;inspection:MigrationInspection;duplicate:boolean};
@@ -223,6 +224,7 @@ export default function MigrationCenter({studioData,onNavigate}:Props){
       <p>구형 사이트 원본을 보존하고 SHA-256으로 검증합니다. 기존 카드·CDB·Lua·리플레이는 자동 덮어쓰지 않습니다.</p></div>
       <button className="migration-primary" disabled={!entries.length||busy} onClick={()=>void exportAll()}><Download size={16}/> 원본 전체 ZIP 내보내기</button>
     </header>
+    <StudioSnapshot/>
     <div className="migration-stats">
       <div><HardDrive size={17}/><span>보관한 원본</span><strong>{entries.length}</strong></div>
       <div><Archive size={17}/><span>보관 총 용량</span><strong>{fmt(entries.reduce((a,e)=>a+e.bytes,0))}</strong></div>
