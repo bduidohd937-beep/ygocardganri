@@ -24,9 +24,10 @@ import FileCenter from './FileCenter';
 import ImportedCardStudio from './ImportedCardStudio';
 import AuditCenter from './AuditCenter';
 import './fullscreen-workspace.css';
-import { applyStudioThemeToFrame } from './studioTheme';
 const NativeWorkspace=lazy(()=>import('./NativeWorkspace'));
 const NativeDesignLab=lazy(()=>import('./NativeDesignLab'));
+const NativeArena=lazy(()=>import('./NativeArena'));
+
 
 import SharedLibrary from './SharedLibrary';
 const MigrationCenter=lazy(()=>import('./MigrationCenter'));
@@ -296,7 +297,6 @@ export default function App(){
   // small return strip; no nested sidebar, content padding, wrapper or footer.
   if(isFullscreenPage(page)){
     const toolName=NAV.find(item=>item.key===page)?.name??'작업실';
-    const base=import.meta.env.BASE_URL.endsWith('/')?import.meta.env.BASE_URL:import.meta.env.BASE_URL+'/';
     const target=page==='artlab'||page==='cardmaker'?page:null;
     return <div className="studio-fullscreen" data-fullscreen-workspace={page}>
       <header className="studio-fullscreen-returnbar">
@@ -308,10 +308,7 @@ export default function App(){
       <main className="studio-fullscreen-stage" aria-label={toolName}>
         {target?<Suspense fallback={<div className="studio-fullscreen-loading">작업실을 불러오는 중...</div>}><NativeWorkspace target={target} fullscreen/></Suspense>:
           page==='designlab'?<Suspense fallback={<div className="studio-fullscreen-loading">DESIGN LAB을 불러오는 중...</div>}><NativeDesignLab/></Suspense>:
-          <iframe className="studio-fullscreen-legacy" title={toolName}
-            src={base+'modules/arena/'}
-            referrerPolicy="no-referrer"
-            onLoad={event=>applyStudioThemeToFrame(event.currentTarget,'arena')} />}
+          <Suspense fallback={<div className="studio-fullscreen-loading">PSH 검증 관제실을 불러오는 중...</div>}><NativeArena/></Suspense>}
       </main>
     </div>;
   }

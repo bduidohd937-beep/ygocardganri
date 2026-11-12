@@ -40,8 +40,9 @@ test('V2.4: DESIGN LAB 및 PSH에 공통 스튜디오 스타일 적용 · 원본
   await expect(page.locator('iframe')).toHaveCount(0);
   await page.getByRole('button',{name:'스튜디오로 돌아가기'}).click();
   await page.getByRole('button',{name:'PSH 검증 관제실',exact:true}).click();
-  const frame=page.locator('iframe[src="/ygocardganri/modules/arena/"]');
-  await expect(frame).toBeVisible();
-  await expect(page.frameLocator('iframe[src="/ygocardganri/modules/arena/"]').locator('#ygo-studio-theme-v2-4')).toHaveCount(1,{timeout:20000});
+  const nativeArena=page.locator('[data-native-tool="arena"]');
+  await expect(nativeArena.locator('#nav')).toBeVisible({timeout:30000});
+  await expect(nativeArena.locator('.logo-mark')).toBeVisible();
+  await expect(page.locator('iframe')).toHaveCount(0);
   await page.getByRole('button',{name:'스튜디오로 돌아가기'}).click();
 });

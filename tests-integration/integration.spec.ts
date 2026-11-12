@@ -51,10 +51,11 @@ test('V2.3: 네 작업실을 한 사이트의 전체 화면으로 전환하고 �
   await close();
 
   await open('PSH 검증 관제실');
-  const frame=page.locator('iframe[title="PSH 검증 관제실"]');
-  await expect(frame).toHaveAttribute('src','/ygocardganri/modules/arena/');
-  await expect(page.frameLocator('iframe[title="PSH 검증 관제실"]').locator('body')).toContainText('MSG16 응답 이후',{timeout:20000});
-  const box=await frame.boundingBox();
+  const arena=page.locator('[data-native-tool="arena"]');
+  await expect(arena.locator('#nav')).toBeVisible({timeout:30000});
+  await expect(arena.locator('#content')).toContainText('MSG16 응답 이후',{timeout:20000});
+  await expect(page.locator('iframe')).toHaveCount(0);
+  const box=await arena.boundingBox();
   expect(box?.width).toBeGreaterThanOrEqual(viewport.width-1);
   await close();
 });
