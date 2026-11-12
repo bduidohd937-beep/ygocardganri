@@ -4,8 +4,8 @@ test('로컬 ZIP과 동일한 카드메이커를 YGO STUDIO에서 실행한다',
   await page.goto('/ygocardganri/');
   await page.getByRole('button', { name: '카드 렌더러', exact: true }).click();
 
-  const tool = page.frameLocator('iframe[title="카드 렌더러"]');
-  await expect(tool.locator('body')).toContainText('CARD STUDIO', { timeout: 20000 });
+  const tool = page.locator('[data-native-tool="cardmaker"]');
+  await expect(tool.locator('select option[value="token"]')).toHaveCount(1,{timeout:30000});
 
   // 로컬 ZIP에서 확인한 신규 기능: 토큰 프레임과 카드 리소스 ZIP 분류.
   await expect(tool.locator('select option[value="token"]')).toHaveCount(1, { timeout: 20000 });
