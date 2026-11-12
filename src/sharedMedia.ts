@@ -23,7 +23,7 @@ export async function listMedia():Promise<MediaItem[]>{
     return result.filter(x=>validCardId(x.id)!==null&&x.blob instanceof Blob);
   }finally{db.close();}
 }
-async function readMaker():Promise<Array<{id:unknown;name:unknown;artwork:unknown}>>{
+export async function readMakerCards():Promise<Array<{id:unknown;name:unknown;artwork:unknown;theme?:unknown;effect?:unknown}>>{
   if(typeof indexedDB.databases==='function'&&!(await indexedDB.databases()).some(x=>x.name==='duelmind-card-studio'))return [];
   const db=await new Promise<IDBDatabase>((resolve,reject)=>{
     const r=indexedDB.open('duelmind-card-studio');
@@ -38,7 +38,7 @@ async function readMaker():Promise<Array<{id:unknown;name:unknown;artwork:unknow
   }finally{db.close();}
 }
 export async function syncMakerImages(cards:SharedCard[]):Promise<MediaImportResult>{
-  const allowed=new Set(cards.map(c=>c.id)),source=await readMaker();
+  const allowed=new Set(cards.map(c=>c.id)),source=await readMakerCards();
   const report:MediaImportResult={added:0,duplicate:0,unmatched:0,invalid:0,total:source.length};
   if(!source.length)return report;
   const db=await openMedia();
