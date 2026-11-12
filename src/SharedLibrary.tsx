@@ -3,7 +3,7 @@ import {
   CATALOG_KEY, HANDOFF_KEY, emptyCatalog, mergeCatalog, parseCards, parsePortableJson,
   parseYdk, toYdk, validateCatalog, validCardId
 } from './sharedCatalog';
-import type { Handoff, ImportCandidate, SharedCard, SharedCatalog, SharedDeck } from './sharedCatalog';
+import type { Handoff, ImportCandidate, SharedCatalog, SharedDeck } from './sharedCatalog';
 import './shared-library.css';
 
 const MAX_UPLOAD=3*1024*1024;
