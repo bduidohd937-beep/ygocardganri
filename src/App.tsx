@@ -297,7 +297,6 @@ export default function App(){
   // small return strip; no nested sidebar, content padding, wrapper or footer.
   if(isFullscreenPage(page)){
     const toolName=NAV.find(item=>item.key===page)?.name??'작업실';
-    const base=import.meta.env.BASE_URL.endsWith('/')?import.meta.env.BASE_URL:import.meta.env.BASE_URL+'/';
     const target=page==='artlab'||page==='cardmaker'?page:null;
     return <div className="studio-fullscreen" data-fullscreen-workspace={page}>
       <header className="studio-fullscreen-returnbar">
