@@ -4,6 +4,7 @@ import {
   ShieldCheck, Swords
 } from 'lucide-react';
 import type { Card, StudioData } from './data';
+import type { CSSProperties } from 'react';
 import './studio-v2-home.css';
 import type { SharedCatalog } from './sharedCatalog';
 import type { ProjectOption, StudioScope } from './studioV2Model';
@@ -74,6 +75,13 @@ export default function StudioHome({
       </button>)}
       {projects.length===2&&<div className="v2-project-note">다른 테마를 추가하려면 공통 카드·덱 보관함에서 숫자 카드 ID 자료를 가져오세요. 미등록 테마는 프로젝트로 표시하지 않습니다.</div>}
     </div>
+    {isGeneral&&<section className="v2-realm-section">
+      <div className="v2-section-heading"><div><span>FEATURED WORLD / NOCTURNA</span><h2>종언성서 · 다섯 세계</h2></div><button className="v2-text-link" onClick={()=>onScopeChange('nocturna')}>프로젝트 자세히 <ArrowRight size={15}/></button></div>
+      <div className="realm-grid">{data.worlds.map((w,i)=><button className="realm-tile" key={w.id} style={{'--realm':w.accent} as CSSProperties} onClick={()=>onOpenWorld(w.id)}>
+        <div className="realm-art"><span className="realm-monogram">{['Ⅰ','Ⅱ','Ⅲ','Ⅳ','Ⅴ'][i]??'✧'}</span><span className="realm-engrave">{w.shortLabel}</span></div>
+        <div className="realm-detail"><span>WORLD / {String(i+1).padStart(2,'0')}</span><strong>{w.name}</strong><small>{w.mechanism}</small><span className="realm-footer">계보 열기 <ArrowRight size={14}/></span></div>
+      </button>)}</div>
+    </section>}
     {!isGeneral&&<section className="v2-scope-detail">
       <div className="v2-panel-head"><div><span>SELECTED PROJECT</span><h3>{selected.name} · 확인된 자료</h3></div><button onClick={()=>onNavigate(isNocturna?'themes':'shared')}>자세히 보기 <ArrowRight size={15}/></button></div>
       {isNocturna?<div className="v2-world-links">{data.worlds.map((w,i)=><button onClick={()=>onOpenWorld(w.id)} key={w.id}><span>0{i+1}</span><strong>{w.name}</strong><small>{w.mechanism}</small><ArrowRight size={14}/></button>)}</div>:
