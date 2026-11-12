@@ -30,6 +30,7 @@ cp "$source_root/arena/index.html" dist/modules/arena/
 test -s "$source_root/cardmaker/dist/embed/cardmaker.js"
 python3 scripts/build-native-artlab.py
 node scripts/build-native-designlab.mjs
+node scripts/build-native-arena.mjs
 cp node_modules/sql.js/dist/sql-wasm.wasm dist/modules/designlab/sql-wasm.wasm
 
 for path in dist/modules/{artlab,designlab,cardmaker,arena}/index.html; do
@@ -44,4 +45,7 @@ test -s dist/modules/designlab/native-designlab.js
 test -s dist/modules/designlab/sql-wasm.wasm
 test -d dist/modules/cardmaker/assets
 test -s dist/modules/arena/index.html
+test -s dist/modules/arena/native-arena.html
+test -s dist/modules/arena/native-arena.css
+test -s dist/modules/arena/native-arena.js
 echo "[통합] 모듈 네 종류 파일 생성 확인 (런타임 브라우저 E2E는 별도)"
