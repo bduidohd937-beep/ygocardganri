@@ -1,0 +1,9 @@
+.deck-link-chooser,.deck-link-zones,.deck-link-summary{display:flex;flex-wrap:wrap;gap:8px}
+.deck-link-chooser button[aria-pressed="true"],.deck-link-zones button[aria-pressed="true"]{background:#145b56}
+.deck-link-summary>div{margin-right:auto}
+.deck-link-entries{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.deck-link-entry{display:flex;gap:10px;padding:10px;border:1px solid #45576b;border-radius:8px}
+.deck-link-entry img,.deck-link-noart{width:60px;height:80px;object-fit:contain;flex-shrink:0}
+.deck-link-noart{color:#a6b7c5;font-size:10px}
+.deck-link-entry-meta{overflow-wrap:anywhere;min-width:0}
+.deck-link-entry-meta details p{white-space:pre-wrap;max-height:200px;overflow:auto}
