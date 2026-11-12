@@ -32,6 +32,18 @@ test('P5.1: A+B and alternative OR routes + brick risk persist in deck study wit
   await combo.locator('.combo-route').first().locator('input[aria-label$=" B 그룹"]').fill('91008602');
   await combo.locator('.combo-route').first().getByRole('button',{name:/조건 적용/}).click();
   await expect(combo.locator('.combo-route').first()).toContainText('서로 다른 실제 카드 2장');
+  const allCombos=await page.evaluate(()=>({
+    combos:[...document.querySelectorAll('.combo-shell')].map((el,i)=>({
+      i,visible:!!(el as HTMLElement).getClientRects().length,
+      ancestor:(()=>{const chain:string[]=[];let p:Element|null=el;while(p&&chain.length<9){chain.push(p.tagName+'.'+p.className);p=p.parentElement;}return chain;})(),
+      selectCount:el.querySelectorAll('select[aria-label="새 루트 A 카드"]').length,
+      routes:el.querySelectorAll('.combo-route').length
+    })),
+    labs:document.querySelectorAll('.decklab-shell').length,
+    roots:document.querySelectorAll('#root').length
+  }));
+  console.log('[P6 COMBO DOM DIAGNOSTIC]',JSON.stringify(allCombos));
+  expect(allCombos.combos.filter(x=>x.visible)).toHaveLength(1);
 
   await combo.locator('select[aria-label="새 루트 A 카드"]').selectOption('91008603');
   await combo.getByRole('button',{name:'루트 추가'}).click();
