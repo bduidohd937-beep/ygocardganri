@@ -22,6 +22,32 @@ jobs:
       - run: npm run build
         env:
           GITHUB_PAGES: 'true'
+      - name: ART LAB 소스 고정
+        uses: actions/checkout@v4
+        with:
+          repository: bduidohd937-beep/ygoimeagemaker
+          ref: bbe322542187a136545597f652a5d8be071e8642
+          path: .integration_sources/artlab
+      - name: 카드 렌더러 소스 고정
+        uses: actions/checkout@v4
+        with:
+          repository: bduidohd937-beep/ygocardmaker
+          ref: faca26872ce40676912c2d661c037c8780312d1f
+          path: .integration_sources/cardmaker
+      - name: DESIGN LAB 소스 고정
+        uses: actions/checkout@v4
+        with:
+          repository: bduidohd937-beep/YU-GI-OH-DESIGN-LAB
+          ref: 8682b594b331ae4b8922fd5009fa62ee66e1cd7b
+          path: .integration_sources/designlab
+      - name: PSH 관제실 소스 고정
+        uses: actions/checkout@v4
+        with:
+          repository: bduidohd937-beep/PSH-AI-ARENA
+          ref: 1e22f657f4b9be08771953fb686a06f56a8faf9c
+          path: .integration_sources/arena
+      - name: 통합 모듈 빌드 및 파일 검증
+        run: bash scripts/assemble-integration.sh
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
