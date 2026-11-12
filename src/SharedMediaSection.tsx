@@ -10,7 +10,7 @@ function downloadMedia(item:Preview){
     +(item.mime==='image/png'?'.png':item.mime==='image/jpeg'?'.jpg':'.webp');
   document.body.append(a);a.click();a.remove();
 }
-export default function SharedMediaSection({cards,blocked,onItemsChange}:{cards:SharedCard[];blocked:boolean;onItemsChange?:(items:MediaItem[])=>void}){
+export default function SharedMediaSection({cards,blocked,onItemsChange,refreshToken=0}:{cards:SharedCard[];blocked:boolean;onItemsChange?:(items:MediaItem[])=>void;refreshToken?:number}){
   const [items,setItems]=useState<MediaItem[]>([]);
   const [previews,setPreviews]=useState<Preview[]>([]);
   const [message,setMessage]=useState('');
@@ -18,7 +18,7 @@ export default function SharedMediaSection({cards,blocked,onItemsChange}:{cards:
   const [error,setError]=useState('');
   const refresh=async()=>{setItems(await listMedia());};
   useEffect(()=>{onItemsChange?.(items);},[items,onItemsChange]);
-  useEffect(()=>{let mounted=true;listMedia().then(v=>{if(mounted)setItems(v);}).catch(e=>{if(mounted)setError(String(e));});return()=>{mounted=false;};},[]);
+  useEffect(()=>{let mounted=true;listMedia().then(v=>{if(mounted)setItems(v);}).catch(e=>{if(mounted)setError(String(e));});return()=>{mounted=false;};},[refreshToken]);
   useEffect(()=>{
     const next=items.slice(0,24).map(item=>({
       id:item.id,name:item.name,mime:item.mime,blob:item.blob,url:URL.createObjectURL(item.blob)
