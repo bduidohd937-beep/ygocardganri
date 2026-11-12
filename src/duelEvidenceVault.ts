@@ -81,7 +81,7 @@ export async function removeDuelEvidence(id:string):Promise<void>{
 export async function mergeDuelEvidenceBackup(payload:unknown):Promise<{added:number;unchanged:number}>{
   if(!validateEvidenceBackup(payload))throw new Error('EDOPro 테스트 기록 JSON 백업 형식이 유효하지 않습니다.');
   const db=await dbOpen();
-  try{return await new Promise((resolve,reject)=>{
+  try{return await new Promise<{added:number;unchanged:number}>((resolve,reject)=>{
     const tx=db.transaction(RECORDS,'readwrite');
     const store=tx.objectStore(RECORDS);
     let added=0,unchanged=0,reason='EDOPro 테스트 기록 복원을 취소했습니다.';
