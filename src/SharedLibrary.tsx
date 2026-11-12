@@ -1,4 +1,4 @@
-import { useMemo, useState, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import {
   CATALOG_KEY, HANDOFF_KEY, emptyCatalog, mergeCatalog, parseCards, parsePortableJson,
   parseYdk, toYdk, validateCatalog, validCardId
@@ -68,8 +68,8 @@ async function makerCards():Promise<unknown[]>{
     return Array.isArray(cards)?cards:[];
   }finally{db.close();}
 }
-type Props={onOpenModule:(tool:'artlab'|'cardmaker')=>void};
-export default function SharedLibrary({onOpenModule}:Props){
+type Props={onOpenModule:(tool:'artlab'|'cardmaker')=>void;initialFilter?:string};
+export default function SharedLibrary({onOpenModule,initialFilter=''}:Props){
   const [initial]=useState(initCatalog);
   const [catalog,setCatalog]=useState(initial.catalog);
   const [blocked]=useState(initial.error);
@@ -77,7 +77,8 @@ export default function SharedLibrary({onOpenModule}:Props){
   const [message,setMessage]=useState('');
   const [id,setId]=useState('');const [name,setName]=useState('');const [theme,setTheme]=useState('');
   const [selected,setSelected]=useState<string[]>([]);
-  const [query,setQuery]=useState('');
+  const [query,setQuery]=useState(initialFilter);
+  useEffect(()=>setQuery(initialFilter),[initialFilter]);
   const cards=useMemo(()=>catalog.cards.filter(c=>(c.id+' '+c.name+' '+c.theme).toLocaleLowerCase().includes(query.toLocaleLowerCase())).slice(0,300),[catalog,query]);
   const visibleSelection=selected.filter(v=>catalog.cards.some(c=>c.id===v));
   const merge=useMemo(()=>preview?mergeCatalog(catalog,preview.candidate):null,[preview,catalog]);
