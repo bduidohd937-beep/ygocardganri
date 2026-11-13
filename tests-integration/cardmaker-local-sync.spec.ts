@@ -45,7 +45,7 @@ test('YGO STUDIO 카드 렌더러 오버프레임 PNG 합성 및 사용 전환',
   const withoutLayer = await readPreview();
 
   await tool.getByRole('tab', { name: '일러스트', exact: true }).click();
-  await expect(tool.getByText('오버프레임', { exact: true })).toBeVisible();
+  await expect(tool.locator('.section-label').filter({ hasText: '오버프레임' })).toBeVisible();
   await expect(tool.getByRole('button', { name: '돌출 PNG 업로드' })).toBeVisible();
   const png = await page.evaluate(() => {
     const canvas = document.createElement('canvas');
