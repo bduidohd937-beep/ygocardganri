@@ -32,7 +32,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: bduidohd937-beep/ygocardmaker
-          ref: 130d5736f8a6f3ab4ef4707178f94d1ed1db3c05
+          ref: 3d64cd833ed7ff1a979434ee5302561850d81791
           path: .integration_sources/cardmaker
       - name: DESIGN LAB 소스 고정
         uses: actions/checkout@v4
