@@ -1,5 +1,7 @@
 import {test,expect} from "@playwright/test";
-import {readFile} from "node:fs/promises";
+import JSZip from "jszip";
+import {readFile,readdir} from "node:fs/promises";
+import {join} from "node:path";
 
 async function openHub(page:import("@playwright/test").Page){
   await page.goto("/ygocardganri/");
@@ -19,6 +21,28 @@ async function makeArtwork(page:import("@playwright/test").Page){
     return c.toDataURL("image/png").split(",")[1];
   });
   return Buffer.from(b64,"base64");
+}
+
+async function validAssetZip(){
+  const dir=".integration_sources/cardmaker/node_modules/@fontsource-variable/noto-sans-kr/files";
+  const fontName=(await readdir(dir)).filter(x=>x.endsWith(".woff2")).sort()[0];
+  if(!fontName)throw Error("검수용 WOFF2 파일을 찾지 못했습니다.");
+  const zip=new JSZip();
+  const png=Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/UI8AAAAASUVORK5CYII=",
+    "base64",
+  );
+  for(const name of [
+    "card-effect.png","card-spell.png","card-trap.png","card-mask.png",
+    "attribute-wind-kr.png","attribute-dark-kr.png","attribute-light-kr.png",
+    "attribute-earth-kr.png","attribute-water-kr.png","attribute-fire-kr.png",
+    "attribute-divine-kr.png","attribute-spell-kr.png","attribute-trap-kr.png",
+    "level.png","rank.png",
+  ])zip.file(name,png);
+  const font=await readFile(join(dir,fontName));
+  for(const name of ["ygo-kr-name.woff2","ygo-kr-race.woff2","ygo-kr.woff2"])
+    zip.file(name,font);
+  return zip.generateAsync({type:"nodebuffer"});
 }
 
 test("V4.1: CDB·JSON 및 자산 ZIP 오류는 성공으로 표시하지 않고, 가져온 카드 자동 선택",async({page})=>{
@@ -96,6 +120,16 @@ test("V4.1: 출력 전 카드별 누락 검수, 수정 이동, 검수표 JSON �
   await hub.getByRole("navigation",{name:"통합 제작 단계"})
     .getByRole("button",{name:/04 출력/}).click();
   await hub.getByRole("combobox",{name:"통합 출력 형태"}).selectOption("both");
+  await expect(audit).toContainText("기존 카드 자산팩 누락");
+  await audit.getByRole("button",{name:"210000401 오버프레임 문제 수정"}).click();
+  await expect(hub.getByRole("navigation",{name:"통합 제작 단계"})
+    .getByRole("button",{name:/01 카드·CDB/})).toHaveAttribute("aria-current","step");
+  await hub.locator('input[aria-label="통합 카드 에셋 ZIP"]').setInputFiles({
+    name:"V41_검수원본_에셋.zip",mimeType:"application/zip",buffer:await validAssetZip(),
+  });
+  await expect(hub.getByRole("status").last()).toContainText("카드 에셋");
+  await hub.getByRole("navigation",{name:"통합 제작 단계"})
+    .getByRole("button",{name:/04 출력/}).click();
   await expect(audit).toContainText("완전 준비 1장");
   await expect(audit).toContainText("보완 필요 2장");
   await audit.getByRole("button",{name:"미완성 카드만 선택 (2)"}).click();
