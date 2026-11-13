@@ -32,3 +32,43 @@ test('로컬 ZIP과 동일한 카드메이커를 YGO STUDIO에서 실행한다',
   await tab.click();
   await expect(tool.getByRole('button', { name: '고급 자르기 · 영역 직접 선택' })).toBeVisible();
 });
+
+
+test('YGO STUDIO 카드 렌더러 오버프레임 PNG 합성 및 사용 전환', async ({ page }) => {
+  await page.goto('/ygocardganri/');
+  await page.getByRole('button', { name: '카드 렌더러', exact: true }).click();
+  const tool = page.locator('[data-native-tool="cardmaker"]');
+  await expect(tool.getByRole('tab', { name: '일러스트', exact: true })).toBeVisible();
+  const preview = tool.locator('canvas[role="img"]');
+  await expect(preview).toBeVisible();
+  const readPreview = () => preview.evaluate(canvas => (canvas as HTMLCanvasElement).toDataURL('image/png'));
+  const withoutLayer = await readPreview();
+
+  await tool.getByRole('tab', { name: '일러스트', exact: true }).click();
+  await expect(tool.locator('.section-label').filter({ hasText: '오버프레임' })).toBeVisible();
+  await expect(tool.getByRole('button', { name: '돌출 PNG 업로드' })).toBeVisible();
+  const png = await page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#ff00aa';
+    ctx.fillRect(12, 12, 40, 40);
+    return canvas.toDataURL('image/png').split(',')[1];
+  });
+  await tool.locator('input[aria-label="오버프레임 돌출 PNG 파일"]').setInputFiles({
+    name: '오버프레임_돌출_검증.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from(png, 'base64'),
+  });
+  const enabled = tool.getByRole('checkbox', { name: '프레임 돌출 사용' });
+  await expect(enabled).toBeChecked();
+  await expect(tool.locator('.overframe-editor input[type="range"]')).toHaveCount(4);
+  await expect.poll(readPreview).not.toBe(withoutLayer);
+
+  // Must compose the same background, frame, and text when the optional layer is disabled.
+  await enabled.uncheck();
+  await expect.poll(readPreview).toBe(withoutLayer);
+  await enabled.check();
+  await expect.poll(readPreview).not.toBe(withoutLayer);
+});
