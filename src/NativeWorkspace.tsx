@@ -9,7 +9,7 @@ type Target='artlab'|'cardmaker';
 type NativeModule={mountCardMaker?:(host:HTMLElement)=>{root:ShadowRoot;unmount:()=>void};mountArtLab?:(root:ShadowRoot)=>()=>void};
 type Handle={root:ShadowRoot;unmount:()=>void};
 const metadata={
-  artlab:{title:'이미지 연구소',version:'YGO ART LAB V1.4',desc:'카드 ID · 임시 일러스트 · SVG 모티브 · 이미지 ZIP'},
+  artlab:{title:'이미지 연구소',version:'YGO ART LAB V1.5',desc:'카드 ID · 24종 화풍 연구실 · 임시 일러스트 · SVG 모티브 · 이미지 ZIP'},
   cardmaker:{title:'카드 렌더러',version:'DUELMIND · 통합 작업실 V4.0',desc:'CDB · 카드 ID 원화 연결 · 일반/3:4 디자인 · EDOPro 통합 출력'}
 };
 const baseUrl=()=>{
@@ -96,9 +96,9 @@ async function loadAssetEngine(base:string):Promise<void>{
 }
 async function mountArtLab(host:HTMLElement,isCancelled:()=>boolean,fullscreen:boolean):Promise<Handle|null>{
   const base=baseUrl(),url=base+'modules/artlab/';
-  const [htmlResponse,cssResponse]=await Promise.all([fetch(url+'index.html'),fetch(url+'styles.css')]);
-  if(!htmlResponse.ok||!cssResponse.ok)throw Error('이미지 연구소 원본 자료를 불러오지 못했습니다.');
-  const [html,css]=await Promise.all([htmlResponse.text(),cssResponse.text()]);
+  const [htmlResponse,cssResponse,promptCssResponse]=await Promise.all([fetch(url+'index.html'),fetch(url+'styles.css'),fetch(url+'prompt-lab.css')]);
+  if(!htmlResponse.ok||!cssResponse.ok||!promptCssResponse.ok)throw Error('이미지 연구소 원본 자료를 불러오지 못했습니다.');
+  const [html,css,promptCss]=await Promise.all([htmlResponse.text(),cssResponse.text(),promptCssResponse.text()]);
   const doc=new DOMParser().parseFromString(html,'text/html');
   const app=doc.querySelector('.shell'),toast=doc.getElementById('toast');
   if(!app||!toast||!doc.getElementById('art-canvas'))throw Error('원본 이미지 생성기 구조가 예상과 다릅니다.');
@@ -116,14 +116,25 @@ async function mountArtLab(host:HTMLElement,isCancelled:()=>boolean,fullscreen:b
   shadow.replaceChildren();
   const style=document.createElement('style');
   style.textContent=':host{display:block;min-width:0;--bg:#090c13;--panel:#111722;--border:#253041;--muted:#8592a9;--txt:#eaf0fc;--blue:#8dabff;--accent:#b5c6ff;--font:"Noto Sans KR",system-ui,sans-serif;color:#eaf0fc;font:13px/1.6 var(--font);background:#090c13;isolation:isolate}\n'
-    +css+(fullscreen?'\n:host .shell{max-width:1510px;margin:0 auto;padding:0 34px 45px}:host .ambient{display:none}':'\n:host .shell{max-width:none;margin:0;padding:0 0 24px}:host .hero{padding-top:10px}:host .workspace{margin-top:13px}:host .ambient{display:none}')+'\n'+nativeToolStyle('artlab');
+    +(css+'\n'+promptCss)+(fullscreen?'\n:host .shell{max-width:1510px;margin:0 auto;padding:0 34px 45px}:host .ambient{display:none}':'\n:host .shell{max-width:none;margin:0;padding:0 0 24px}:host .hero{padding-top:10px}:host .workspace{margin-top:13px}:host .ambient{display:none}')+'\n'+nativeToolStyle('artlab');
   shadow.append(style,app,toast);
   await loadAssetEngine(base);
   if(isCancelled()){if(shadow.contains(app))shadow.replaceChildren();return null;}
   const mod:NativeModule=await import(/* @vite-ignore */ url+'native.js');
   if(typeof mod.mountArtLab!=='function')throw Error('이미지 연구소 네이티브 모듈을 찾지 못했습니다.');
   const cleanup=mod.mountArtLab(shadow);
-  return {root:shadow,unmount:()=>{cleanup();if(shadow.contains(app))shadow.replaceChildren();}};
+  // Separate prompt module uses the same selected-card bridge but never changes
+  // CDB, Lua, or generated images unless the user explicitly presses Apply.
+  let promptCleanup:()=>void=()=>{};
+  try {
+    const promptModule=await import(/* @vite-ignore */ url+'prompt-lab-native.js');
+    if(typeof promptModule.mountPromptLab!=='function')throw Error('화풍 연구실 모듈이 없습니다.');
+    promptCleanup=promptModule.mountPromptLab(shadow);
+  } catch (error) {
+    cleanup();
+    throw error;
+  }
+  return {root:shadow,unmount:()=>{promptCleanup();cleanup();if(shadow.contains(app))shadow.replaceChildren();}};
 }
 async function mountMaker(host:HTMLElement,isCancelled:()=>boolean,fullscreen:boolean):Promise<Handle|null>{
   const mod:NativeModule=await import(/* @vite-ignore */ baseUrl()+'modules/cardmaker/embed/cardmaker.js');
