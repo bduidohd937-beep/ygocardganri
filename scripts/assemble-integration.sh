@@ -19,7 +19,7 @@ echo "[통합] DESIGN LAB 단위 테스트"
 npm test --prefix "$source_root/designlab"
 
 mkdir -p dist/modules/artlab dist/modules/designlab dist/modules/cardmaker dist/modules/arena
-cp "$source_root/artlab/index.html" "$source_root/artlab/app.js" "$source_root/artlab/asset-engine.js" "$source_root/artlab/styles.css" dist/modules/artlab/
+cp "$source_root/artlab/index.html" "$source_root/artlab/app.js" "$source_root/artlab/asset-engine.js" "$source_root/artlab/styles.css" "$source_root/artlab/prompt-lab.js" "$source_root/artlab/prompt-lab.css" dist/modules/artlab/
 cp -R "$source_root/artlab/assets" dist/modules/artlab/
 cp "$source_root/designlab/index.html" dist/modules/designlab/
 cp -R "$source_root/designlab/src" dist/modules/designlab/
@@ -39,6 +39,9 @@ done
 test -s dist/modules/artlab/asset-engine.js
 test -s dist/modules/artlab/asset-engine-native.js
 test -s dist/modules/artlab/native.js
+test -s dist/modules/artlab/prompt-lab.js
+test -s dist/modules/artlab/prompt-lab.css
+test -s dist/modules/artlab/prompt-lab-native.js
 test -s dist/modules/cardmaker/embed/cardmaker.js
 test -s dist/modules/designlab/src/main.js
 test -s dist/modules/designlab/native-designlab.js
