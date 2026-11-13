@@ -1,0 +1,66 @@
+.generic-encyclopedia{display:flex;flex-direction:column;gap:17px;color:#e5e9e8;min-width:0}
+.ge-heading{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.ge-heading h1{font:600 clamp(24px,2.6vw,34px) 'Noto Serif KR',serif;display:flex;align-items:center;gap:12px;margin:11px 0}
+.ge-heading p,.ge-note{font-size:12px;color:#95a3b0;line-height:1.75;margin:0}
+.ge-stats{display:flex;flex-wrap:wrap;gap:10px}
+.ge-stats span{padding:13px 18px;background:#171d26;border:1px solid #343e49;border-radius:7px;font-size:11px;color:#a7b3be}
+.ge-stats strong{font:600 20px Georgia,serif;color:#ebe9e6;margin-left:8px}
+.ge-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
+.ge-toolbar>button,.ge-toolbar>.ge-import,.ge-linked button,.ge-history button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;background:#242c35;border:1px solid #45515d;border-radius:6px;color:#e1e6e5;padding:8px 12px;font-size:11px;white-space:nowrap;cursor:pointer}
+.ge-toolbar button:hover,.ge-toolbar>.ge-import:hover{background:#303c48}
+.ge-toolbar button:disabled{opacity:.55;cursor:wait}
+.ge-toolbar select{background:#222c36;color:#e1e6e5;border:1px solid #45515d;border-radius:6px;padding:8px 12px;font-size:11px}
+.ge-toolbar .ge-search{flex:1 1 240px;display:flex;align-items:center;gap:9px;padding:0 10px;border:1px solid #45515d;border-radius:6px;background:#151d26;color:#95a1af}
+.ge-toolbar .ge-search input{width:100%;min-width:0;padding:9px 0;border:0;outline:none;background:transparent;color:#e9eeea;font-size:12px}
+.ge-import input,.ge-lua input,.ge-image input{display:none}
+.ge-body{display:grid;grid-template-columns:minmax(260px,.82fr) minmax(0,1.6fr);gap:16px;align-items:start;min-width:0}
+.ge-list{max-height:min(68vh,920px);overflow:auto;background:#141b23;border:1px solid #333e4a;border-radius:7px}
+.ge-list-header{padding:13px 15px;border-bottom:1px solid #343e49;font-size:11px;color:#aab7c2}
+.ge-item{display:flex;gap:11px;align-items:center;width:100%;min-width:0;padding:11px 12px;border:0;border-bottom:1px solid #2b3641;background:transparent;color:#e3e9e6;text-align:left;cursor:pointer}
+.ge-item:hover,.ge-item--active{background:#263039}
+.ge-item--active{border-left:3px solid #b67c74;padding-left:9px}
+.ge-thumb{width:44px;height:62px;flex:0 0 44px;display:grid;place-items:center;border:1px solid #47525a;color:#7f909d;background:#222b33;overflow:hidden}
+.ge-thumb img{width:100%;height:100%;object-fit:cover}
+.ge-item-main{min-width:0;display:flex;flex:1;flex-direction:column;gap:4px}
+.ge-item-main strong{font-size:12px;overflow-wrap:anywhere}
+.ge-item-main small{font-size:10px;color:#91a0af;line-height:1.45;overflow-wrap:anywhere}
+.ge-item em{font-size:10px;font-style:normal;border:1px solid #665a58;border-radius:4px;padding:3px 6px;color:#cdaaa2}
+.ge-empty{padding:22px;color:#9caeb9;font-size:12px}
+.ge-detail{min-width:0;display:flex;flex-direction:column;gap:18px;padding:18px;background:#181f28;border:1px solid #3b4650;border-radius:8px}
+.ge-detail-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ge-detail-head h2{font:600 21px 'Noto Serif KR',serif;margin:0 0 8px;line-height:1.4;overflow-wrap:anywhere}
+.ge-detail-head small,.ge-detail-head>span{font-size:11px;color:#97a6b3}
+.ge-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.ge-fields label,.ge-textarea{font-size:11px;color:#bdc8cc;display:flex;flex-direction:column;gap:7px}
+.ge-fields input,.ge-fields select,.ge-textarea textarea,.ge-history input{min-width:0;width:100%;background:#111a23;border:1px solid #414c56;border-radius:5px;color:#e6eeea;padding:10px;font:inherit;font-size:12px}
+.ge-textarea textarea{resize:vertical;line-height:1.6}
+.ge-linked{background:#152029;border:1px solid #384954;border-radius:6px;padding:13px;font-size:12px}
+.ge-linked summary{cursor:pointer;font-weight:600}
+.ge-links{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}
+.ge-links span{font-size:10px;padding:6px 8px;color:#abb9bd;background:#26313c;border:1px solid #3b4854;border-radius:4px}
+.ge-linked-effect{margin:10px 0 14px;border-top:1px solid #3f4b53;padding-top:10px}
+.ge-linked-effect strong{font-size:11px}
+.ge-linked-effect pre{font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere;color:#c8d0d2;line-height:1.65;max-height:200px;overflow:auto}
+.ge-images{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.ge-image{display:flex;flex-direction:column;gap:8px;min-width:0;background:#111b25;border:1px solid #384650;padding:9px;border-radius:6px}
+.ge-image>strong{font-size:11px}
+.ge-preview{height:165px;display:grid;place-items:center;overflow:hidden;background:#0c141b}
+.ge-preview img{max-width:100%;max-height:100%;object-fit:contain}
+.ge-preview span{display:flex;flex-direction:column;align-items:center;gap:9px;color:#82919e;font-size:10px}
+.ge-image label,.ge-lua label{display:inline-flex;justify-content:center;align-items:center;padding:8px;border:1px solid #667581;border-radius:5px;color:#dde6e6;font-size:11px;cursor:pointer}
+.ge-image small{font-size:10px;text-align:center;color:#90a0ac}
+.ge-lua{display:flex;align-items:center;gap:12px;padding:11px;background:#1c2730;border:1px solid #344653;border-radius:6px}
+.ge-lua>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.ge-lua strong{font-size:12px;overflow-wrap:anywhere}
+.ge-lua small{font-size:10px;color:#a1b0bb;line-height:1.5}
+.ge-history{display:flex;flex-direction:column;gap:9px}
+.ge-history>strong{font-size:12px}
+.ge-history>div{display:flex;gap:9px}
+.ge-history input{flex:1;min-width:0}
+.ge-history p{font-size:11px;border-left:2px solid #ad7a70;padding-left:9px;margin:0;overflow-wrap:anywhere}
+.ge-history small{font-size:10px;color:#8b9ba8}
+.ge-note{border-top:1px solid #39444f;padding:13px 0}
+.ge-message{color:#dbe8de;background:#273932;border:1px solid #526d5b;border-radius:5px;padding:11px 13px;font-size:12px;line-height:1.6}
+@media(max-width:1120px){.ge-body{grid-template-columns:minmax(215px,.8fr) minmax(0,1.5fr)}}
+@media(max-width:900px){.ge-body{grid-template-columns:1fr}.ge-list{max-height:275px}}
+@media(max-width:620px){.ge-heading{flex-direction:column;align-items:flex-start}.ge-fields{grid-template-columns:1fr}.ge-images{grid-template-columns:1fr}.ge-preview{height:200px}}

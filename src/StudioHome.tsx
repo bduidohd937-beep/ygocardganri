@@ -9,7 +9,7 @@ import './studio-v2-home.css';
 import type { SharedCatalog } from './sharedCatalog';
 import type { ProjectOption, StudioScope } from './studioV2Model';
 
-type Destination='home'|'themes'|'cards'|'worlds'|'reviews'|'decks'|'shared'|'artlab'|'cardmaker'|'designlab'|'arena'|'history';
+type Destination='home'|'generic'|'themes'|'cards'|'worlds'|'reviews'|'decks'|'shared'|'artlab'|'cardmaker'|'designlab'|'arena'|'history';
 type Props={
   data:StudioData;
   counts:{pending:number;reviewing:number;unknown:number};
@@ -24,6 +24,7 @@ type Props={
   onOpenCard:(id:string)=>void;
 };
 const SHORTCUTS=[
+  {page:'generic',title:'범용 카드 도감',detail:'ID · 효과 · 채택 · 실전 검증',icon:BookOpen},
   {page:'cards',title:'카드 제작',detail:'카드 원문 · 설계 · 승인',icon:Layers3},
   {page:'artlab',title:'이미지 연구소',detail:'임시 원화 · 일괄 생성',icon:Image},
   {page:'cardmaker',title:'카드 렌더러',detail:'카드 프레임 · 이미지 출력',icon:CreditCard},
@@ -48,6 +49,7 @@ export default function StudioHome({
         <h1>{isGeneral?'YGO STUDIO':selected.name}</h1>
         <p>{isGeneral?'카드 제작부터 일러스트·덱 연구·검증 기록까지. 흩어진 작업실을 하나의 공간에서 관리하세요.':selected.description+' · 현재 선택은 작업 화면의 탐색 범위이며, 도구 사이의 데이터를 자동 동기화하지 않습니다.'}</p>
         <div className="v2-hero-actions">
+          <button className="primary-button" onClick={()=>onNavigate('generic')}><BookOpen size={16}/> 범용 카드 도감 바로 열기</button>
           <button className="primary-button" onClick={()=>onNavigate(isGeneral?'cards':isNocturna?'themes':'shared')}>{isGeneral?'카드 작업 시작':isNocturna?'세계관 작업 열기':'공통 카드 목록 열기'} <ArrowRight size={15}/></button>
           <button className="outline-button" onClick={()=>onNavigate('shared')}>공통 카드·덱 보관함 <Database size={15}/></button>
         </div>

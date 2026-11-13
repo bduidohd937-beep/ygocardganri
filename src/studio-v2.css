@@ -42,3 +42,13 @@
 .studio-v2 .searchbox{width:238px}
 .studio-v2 .content--home{max-width:1440px}
 .studio-v2 .footer{font-size:10px}
+
+/* 범용 카드 도감: 메인 상단에서 항상 한 번에 진입 */
+.studio-v2 .generic-main-link{display:inline-flex;gap:7px;align-items:center;min-height:35px;white-space:nowrap;
+  padding:7px 11px;background:#3c2829;border:1px solid #af7672;color:#f7d9d1;border-radius:6px;font-size:11px;font-weight:700}
+.studio-v2 .generic-main-link:hover{background:#543438}
+.studio-v2 .v2-shortcut-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.studio-v2 .v2-shortcut:has(.v2-shortcut-icon):first-child{border-color:#89605e;background:#241d25}
+@media(max-width:1050px){.studio-v2 .topbar-right .searchbox{width:170px}.studio-v2 .v2-shortcut-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){.studio-v2 .generic-main-link{font-size:0;padding:7px;gap:0}.studio-v2 .generic-main-link svg{width:19px;height:19px}.studio-v2 .v2-shortcut-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.studio-v2 .v2-shortcut-grid{grid-template-columns:1fr 1fr}}
