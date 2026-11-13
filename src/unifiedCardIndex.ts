@@ -118,7 +118,7 @@ export function filterUnifiedRows(rows:readonly UnifiedCardRow[],filter:UnifiedF
 }
 export function unifiedReport(rows:readonly UnifiedCardRow[]):string{
   const columns=['카드 ID','카드명','테마','연결 수','공통 카드','일러스트','CDB 원문','Lua','덱 사용','문제'];
-  const csv=(s:string)=>'"'+(/^[\\s]*[=+@-]/.test(s)?"'"+s:s).replace(/"/g,'""')+'"';
+  const csv=(s:string)=>'"'+(/^\s*[=+@-]/.test(s)?"'"+s:s).replace(/"/g,'""')+'"';
   return '\uFEFF'+[columns.join(','),...rows.map(r=>[
     r.id,r.name,r.theme,String(r.linkedCount)+'/4',r.card?'있음':'없음',r.image||r.fileImages.length?'있음':'없음',
     r.cdb.length?'있음':'없음',r.lua.length?'있음':'없음',String(r.deckUses.length),r.issues.join(' / ')
