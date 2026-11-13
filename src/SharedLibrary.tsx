@@ -6,6 +6,7 @@ import {
 import type { Handoff, ImportCandidate, SharedCatalog } from './sharedCatalog';
 import SharedMediaSection from './SharedMediaSection';
 import DeckLinkPanel from './DeckLinkPanel';
+import UnifiedCardHub from './UnifiedCardHub';
 import {listMedia,type MediaItem} from './sharedMedia';
 import './shared-library.css';
 
@@ -70,8 +71,8 @@ async function makerCards():Promise<unknown[]>{
     return Array.isArray(cards)?cards:[];
   }finally{db.close();}
 }
-type Props={onOpenModule:(tool:'artlab'|'cardmaker')=>void;initialFilter?:string};
-export default function SharedLibrary({onOpenModule,initialFilter=''}:Props){
+type Props={onOpenModule:(tool:'artlab'|'cardmaker')=>void;onOpenFiles:()=>void;onOpenImportedCard:(themeId:string,passcode:string)=>void;initialFilter?:string};
+export default function SharedLibrary({onOpenModule,onOpenFiles,onOpenImportedCard,initialFilter=''}:Props){
   const [initial]=useState(initCatalog);
   const [catalog,setCatalog]=useState(initial.catalog);
   const [mediaItems,setMediaItems]=useState<MediaItem[]>([]);
@@ -224,5 +225,6 @@ export default function SharedLibrary({onOpenModule,initialFilter=''}:Props){
       {catalog.cards.length>300&&<p className="shared-help">목록 성능 보호를 위해 검색 결과 상위 300장만 표시합니다.</p>}
     </section>
     <DeckLinkPanel decks={catalog.decks} cards={catalog.cards} media={mediaItems} catalog={catalog} blocked={!!blocked} onSave={recoverySave} onImagesChanged={recoveryImagesChanged}/>
+    <UnifiedCardHub catalog={catalog} media={mediaItems} onOpenFiles={onOpenFiles} onOpenImportedCard={onOpenImportedCard}/>
   </div>;
 }
