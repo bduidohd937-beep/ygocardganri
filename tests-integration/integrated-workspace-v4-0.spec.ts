@@ -69,7 +69,7 @@ async function loadArt(page:import("@playwright/test").Page,hub:import("@playwri
 
 test("V4.0 CDB/에셋 통합·ID 원화 매칭·기존 이미지 보호·디자인 진입",async({page})=>{
   const {tool,hub}=await openHub(page);
-  await expect(hub.getByText("01 카드·CDB")).toBeVisible();
+  await expect(hub.getByRole("navigation",{name:"통합 제작 단계"}).getByRole("button",{name:/01 카드·CDB/})).toBeVisible();
   await expect(hub.locator(".studio-hub-stats")).toContainText("전체 카드");
   await loadAssets(hub);
   await loadArt(page,hub,[210000401,210000402]);
@@ -128,7 +128,7 @@ test("V4.0 통합 ZIP: 고화질 일반/3:4, EDOPro 양쪽·단독, 검수보고
   await hub.getByRole("combobox",{name:"통합 EDOPro 비율"}).selectOption("pad");
   const download2=page.waitForEvent("download");
   await hub.getByRole("button",{name:"선택 카드 통합 ZIP 다운로드"}).click();
-  const data2=await JSZip.loadAsync(await readFile(await(download2).path()));
+  const data2=await JSZip.loadAsync(await readFile(await (await download2).path()));
   for(const name of [
     "EDOPro_일반/pics/210000401.png",
     "EDOPro_오버프레임/pics/210000401.png",
@@ -141,7 +141,7 @@ test("V4.0 통합 ZIP: 고화질 일반/3:4, EDOPro 양쪽·단독, 검수보고
   await hub.getByRole("combobox",{name:"통합 출력 형태"}).selectOption("overframe");
   const download3=page.waitForEvent("download");
   await hub.getByRole("button",{name:"선택 카드 통합 ZIP 다운로드"}).click();
-  const data3=await JSZip.loadAsync(await readFile(await(download3).path()));
+  const data3=await JSZip.loadAsync(await readFile(await (await download3).path()));
   expect(data3.file("pics/210000401.png")).not.toBeNull();
   expect(data3.file("EDOPro_일반/pics/210000401.png")).toBeNull();
 });
