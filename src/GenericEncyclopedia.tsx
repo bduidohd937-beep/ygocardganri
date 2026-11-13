@@ -41,7 +41,7 @@ function assetFileName(slot:GenericSlot,mime:string,cardId:string):string{
   return prefix+(mime==='image/png'?'.png':mime==='image/webp'?'.webp':'.jpg');
 }
 export default function GenericEncyclopedia({records:input,sharedCatalog,onChange,onOpenFiles}:Props){
-  const records=genericRecordsOrSeed(input);
+  const records=useMemo(()=>genericRecordsOrSeed(input),[input]);
   const [query,setQuery]=useState('');
   const [filter,setFilter]=useState<GenericAdoption|'전체'>('전체');
   const [selectedKey,setSelectedKey]=useState('card-990470201');
@@ -55,7 +55,7 @@ export default function GenericEncyclopedia({records:input,sharedCatalog,onChang
   const [nameDraft,setNameDraft]=useState('');
   const [linkedUrl,setLinkedUrl]=useState('');
   const [urls,setUrls]=useState<Record<string,string>>({});
-  const shared=sharedCatalog||emptyCatalog();
+  const shared=useMemo(()=>sharedCatalog||emptyCatalog(),[sharedCatalog]);
   const index=useMemo(()=>files?buildUnifiedIndex(shared,media,files):null,[sharedCatalog,files,media]);
   const byId=useMemo(()=>new Map((index?.rows||[]).map(r=>[r.id,r])),[index]);
   const references=useMemo(()=>new Map((index?.rows||[]).map(r=>[
