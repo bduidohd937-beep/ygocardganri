@@ -28,11 +28,11 @@ jobs:
           repository: bduidohd937-beep/ygoimeagemaker
           ref: bbe322542187a136545597f652a5d8be071e8642
           path: .integration_sources/artlab
-      - name: 카드 렌더러 소스 고정
+      - name: 카드 렌더러 소스 고정 · 오버프레임
         uses: actions/checkout@v4
         with:
           repository: bduidohd937-beep/ygocardmaker
-          ref: 95f0fbed5097fe816e73fec37ba20ef5383e179e
+          ref: 185ec90b247f138449a390aa8146b54a190da6f5
           path: .integration_sources/cardmaker
       - name: DESIGN LAB 소스 고정
         uses: actions/checkout@v4
