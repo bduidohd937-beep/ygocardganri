@@ -31,6 +31,12 @@ test('로컬 ZIP과 동일한 카드메이커를 YGO STUDIO에서 실행한다',
   const tab = tool.getByRole('tab', { name: '일러스트', exact: true });
   await tab.click();
   await expect(tool.getByRole('button', { name: '고급 자르기 · 영역 직접 선택' })).toBeVisible();
+  await expect(tool.getByRole('button', { name: '3:4 간편 모드 열기' })).toHaveCount(0);
+  await expect(tool.getByRole('button', { name: '돌출 PNG 업로드' })).toHaveCount(0);
+  await tool.getByRole('tab', { name: '오버프레임', exact: true }).click();
+  await expect(tool.getByRole('button', { name: '3:4 간편 모드 열기' })).toBeVisible();
+  await expect(tool.getByRole('button', { name: '돌출 PNG 업로드' })).toBeVisible();
+  await expect(tool.getByRole('button', { name: '고급 자르기 · 영역 직접 선택' })).toHaveCount(0);
 });
 
 
@@ -44,8 +50,9 @@ test('YGO STUDIO 카드 렌더러 오버프레임 PNG 합성 및 사용 전환',
   const readPreview = () => preview.evaluate(canvas => (canvas as HTMLCanvasElement).toDataURL('image/png'));
   const withoutLayer = await readPreview();
 
-  await tool.getByRole('tab', { name: '일러스트', exact: true }).click();
-  await expect(tool.locator('.section-label').filter({ hasText: '오버프레임' })).toBeVisible();
+  await tool.getByRole('tab', { name: '오버프레임', exact: true }).click();
+  await expect(tool.locator('.section-label').filter({ hasText: '간편 오버프레임' })).toBeVisible();
+  await expect(tool.locator('.section-label').filter({ hasText: '정밀 오버프레임' })).toBeVisible();
   await expect(tool.getByRole('button', { name: '돌출 PNG 업로드' })).toBeVisible();
   const png = await page.evaluate(() => {
     const canvas = document.createElement('canvas');
@@ -78,7 +85,7 @@ test('오버프레임 V2: 카드 위 이동·지우개·되돌리기·저장', a
   await page.goto('/ygocardganri/');
   await page.getByRole('button', { name: '카드 렌더러', exact: true }).click();
   const tool = page.locator('[data-native-tool="cardmaker"]');
-  await tool.getByRole('tab', { name: '일러스트', exact: true }).click();
+  await tool.getByRole('tab', { name: '오버프레임', exact: true }).click();
   const png = await page.evaluate(() => {
     const c = document.createElement('canvas');
     c.width = 96; c.height = 96;

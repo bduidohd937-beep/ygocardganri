@@ -25,6 +25,8 @@ test("YGO STUDIO: 3:4 원본 속성·랭크 에셋 적용, 저장·PNG 다운로
   await expect(tool.getByText(/카드_원본에셋_검증.zip/)).toBeVisible();
 
   await tool.getByRole("tab", { name: "일러스트", exact: true }).click();
+  await expect(tool.getByRole("button", { name: "3:4 간편 모드 열기" })).toHaveCount(0);
+  await tool.getByRole("tab", { name: "오버프레임", exact: true }).click();
   await tool.getByRole("button", { name: "3:4 간편 모드 열기" }).click();
   const dialog = tool.getByRole("dialog", { name: "오버프레임 간편 제작" });
   await expect(dialog).toBeVisible();
