@@ -72,3 +72,51 @@ test('YGO STUDIO 카드 렌더러 오버프레임 PNG 합성 및 사용 전환',
   await enabled.check();
   await expect.poll(readPreview).not.toBe(withoutLayer);
 });
+
+
+test('오버프레임 V2: 카드 위 이동·지우개·되돌리기·저장', async ({ page }) => {
+  await page.goto('/ygocardganri/');
+  await page.getByRole('button', { name: '카드 렌더러', exact: true }).click();
+  const tool = page.locator('[data-native-tool="cardmaker"]');
+  await tool.getByRole('tab', { name: '일러스트', exact: true }).click();
+  const png = await page.evaluate(() => {
+    const c = document.createElement('canvas');
+    c.width = 96; c.height = 96;
+    const ctx = c.getContext('2d')!;
+    ctx.fillStyle = '#ff00aa';
+    ctx.fillRect(0, 0, 96, 96);
+    return c.toDataURL().split(',')[1];
+  });
+  await tool.locator('input[aria-label="오버프레임 돌출 PNG 파일"]').setInputFiles({
+    name: '오버프레임_V2_테스트.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64'),
+  });
+  await tool.getByRole('button', { name: /정밀 편집 · 마스크/ }).click();
+  await expect(tool.getByRole('dialog', { name: '오버프레임 정밀 편집' })).toBeVisible();
+  const editor = tool.locator('canvas[aria-label="오버프레임 직접 편집 캔버스"]');
+  await expect(editor).toBeVisible();
+  const frame = () => editor.evaluate(el => (el as HTMLCanvasElement).toDataURL('image/png'));
+  await expect.poll(async () => (await frame()).length).toBeGreaterThan(4000);
+  const original = await frame();
+  await tool.getByRole('button', { name: '지우개' }).click();
+  await page.waitForTimeout(200);
+  const box = await editor.boundingBox();
+  if (!box) throw Error('오버프레임 편집기 캔버스가 없습니다.');
+  await page.mouse.click(box.x + box.width * .5, box.y + box.height * (545 / 1228));
+  await expect.poll(frame).not.toBe(original);
+  await tool.getByRole('button', { name: '실행 취소' }).click();
+  await expect.poll(frame).toBe(original);
+  await tool.getByRole('button', { name: '다시 실행' }).click();
+  await expect.poll(frame).not.toBe(original);
+
+  await tool.getByRole('button', { name: '이동', exact: true }).click();
+  const x = tool.locator('.of-controls input[type="range"]').first();
+  const beforeX = await x.inputValue();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height * (545 / 1228));
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 + 25, box.y + box.height * (545 / 1228) + 10, { steps: 4 });
+  await page.mouse.up();
+  await expect.poll(() => x.inputValue()).not.toBe(beforeX);
+  await tool.getByRole('button', { name: '카드에 적용' }).click();
+  await expect(tool.getByRole('dialog', { name: '오버프레임 정밀 편집' })).toHaveCount(0);
+  await expect(tool.getByRole('button', { name: /정밀 편집 · 마스크/ })).toBeVisible();
+});
