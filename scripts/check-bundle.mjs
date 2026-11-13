@@ -2,6 +2,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 
 // User-facing startup bundle and optional ZIP/SQLite worker have different budgets.
+// The encyclopedia is lazy-loaded: allow one additional small CSS chunk without raising initial CSS limit.
 const files = readdirSync('dist/assets');
 const html = readFileSync('dist/index.html','utf8');
 const entry = html.match(/assets\/(index-[^"']+\.js)/)?.[1];
@@ -17,7 +18,7 @@ if(!entryCss||!cssFiles.includes(entryCss)) throw new Error('Missing Vite entry 
 const initialCssBytes=gzip(entryCss);
 const wasmFiles=files.filter(f=>f.endsWith('.wasm'));
 const wasmTotal=wasmFiles.reduce((n,f)=>n+readFileSync(`dist/assets/${f}`).byteLength,0);
-const budgets=[['초기 JS',entryBytes,150*1024],['옵션 파서 JS',lazyBytes,500*1024],['초기 CSS',initialCssBytes,20*1024],['전체 CSS',cssBytes,27*1024],['WASM',wasmTotal,1.5*1024*1024]];
+const budgets=[['초기 JS',entryBytes,150*1024],['옵션 파서 JS',lazyBytes,500*1024],['초기 CSS',initialCssBytes,20*1024],['전체 CSS',cssBytes,30*1024],['WASM',wasmTotal,1.5*1024*1024]];
 for (const [label,amount,max] of budgets) {
  console.log(`[P2] ${label}: ${(amount/1024).toFixed(1)} KiB / budget ${(max/1024).toFixed(1)} KiB`);
  if (amount>max) throw new Error(`${label} asset size exceeds budget`);
