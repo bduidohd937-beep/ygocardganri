@@ -1,4 +1,5 @@
 /** YGO CARD STUDIO — 최초 데이터는 사용자 확정 사실만 기록한다. */
+import {initialGenericRecords,type GenericRecord} from './genericCatalog';
 export type StageIndex = -1 | 0 | 1 | 2;
 export type ApprovalStatus = '미확인' | '초안' | '검토중' | '승인' | '반려';
 export type RuleStatus = '미확인' | '검토중' | '충돌 확인' | '충돌 없음 확인';
@@ -28,7 +29,7 @@ export type History = {
   id: string; at: string; action: string; entity: 'card' | 'world' | 'project'; entityId: string;
   entityName: string; field: string; before: string; after: string; memo: string;
 };
-export type StudioData = { schemaVersion: 1; worlds: World[]; cards: Card[]; history: History[] };
+export type StudioData = { schemaVersion: 1; worlds: World[]; cards: Card[]; history: History[]; genericCards?:GenericRecord[] };
 
 export const PHASES = ['첫 고난', '극복', '지배'] as const;
 export const APPROVAL_OPTIONS: ApprovalStatus[] = ['미확인','초안','검토중','승인','반려'];
@@ -87,7 +88,7 @@ export function createInitialData(): StudioData {
     notes: '여섯 세력 공유 기본형. 신규 《무명성서》 세계별 아벨 5종과 다른 카드.',
     version: 2, updatedAt: now,
   });
-  return { schemaVersion: 1, worlds, cards, history: [] };
+  return { schemaVersion: 1, worlds, cards, history: [], genericCards:initialGenericRecords() };
 }
 
 export function countUnknown(data: StudioData) {
