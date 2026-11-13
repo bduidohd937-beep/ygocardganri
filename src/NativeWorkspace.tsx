@@ -10,7 +10,7 @@ type NativeModule={mountCardMaker?:(host:HTMLElement)=>{root:ShadowRoot;unmount:
 type Handle={root:ShadowRoot;unmount:()=>void};
 const metadata={
   artlab:{title:'이미지 연구소',version:'YGO ART LAB V1.4',desc:'카드 ID · 임시 일러스트 · SVG 모티브 · 이미지 ZIP'},
-  cardmaker:{title:'카드 렌더러',version:'DUELMIND · 오버프레임 V2.2',desc:'카드 프레임 · 오버프레임 정밀 편집 · 브러시 마스크 · PNG/JPG/ZIP'}
+  cardmaker:{title:'카드 렌더러',version:'DUELMIND · 오버프레임 V3',desc:'일반 카드 · 3:4 원화 간편 제작 · 마스크 정밀 편집 · PNG/ZIP'}
 };
 const baseUrl=()=>{
   const b=import.meta.env.BASE_URL;
