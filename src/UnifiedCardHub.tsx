@@ -46,7 +46,7 @@ export default function UnifiedCardHub({catalog,media,onOpenFiles,onOpenImported
   useEffect(()=>{void refresh();},[]);
   const index=useMemo(()=>fileCatalog?buildUnifiedIndex(catalog,media,fileCatalog):null,[catalog,media,fileCatalog]);
   const results=useMemo(()=>index?filterUnifiedRows(index.rows,filter,query):[],[index,filter,query]);
-  const selected=index?.rows.find(row=>row.id===selectedId)||results[0]||null;
+  const selected=results.find(row=>row.id===selectedId)||results[0]||null;
   const fileImages=selected?.fileImages;
   const sharedImage=selected?.image;
   useEffect(()=>{
