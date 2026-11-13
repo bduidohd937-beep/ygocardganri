@@ -34,12 +34,20 @@ test("V3.5 오버프레임: 연출 ON/OFF·종류별 광택·프리셋 저장·�
   const enabled=dialog.getByRole("checkbox",{name:"오버프레임 연출 사용"});
   const style=dialog.getByRole("combobox",{name:"오버프레임 연출 종류"});
   const strength=dialog.getByRole("slider",{name:"오버프레임 연출 강도"});
+  const setStrength=(value:number)=>strength.evaluate((element,v)=>{
+    const input=element as HTMLInputElement;
+    const setter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value")?.set;
+    if (!setter) throw Error("슬라이더 setter를 찾지 못했습니다.");
+    setter.call(input,String(v));
+    input.dispatchEvent(new Event("input",{bubbles:true}));
+    input.dispatchEvent(new Event("change",{bubbles:true}));
+  },value);
   await expect(enabled).not.toBeChecked();
   await expect(style).toHaveValue("none");
 
   await style.selectOption("xyz");
   await expect(enabled).toBeChecked();
-  await strength.fill("80");
+  await setStrength(80);
   await expect.poll(snapshot).not.toBe(original);
   const obsidian=await snapshot();
   await style.selectOption("fusion");
@@ -52,7 +60,7 @@ test("V3.5 오버프레임: 연출 ON/OFF·종류별 광택·프리셋 저장·�
   // Custom presets are stored on the card, not in a transient browser-only setting.
   await dialog.getByRole("textbox",{name:"연출 프리셋 이름"}).fill("내 흑요광");
   await style.selectOption("xyz");
-  await strength.fill("70");
+  await setStrength(70);
   await dialog.getByRole("button",{name:"현재 연출 프리셋 저장"}).click();
   const preset=dialog.getByRole("combobox",{name:"오버프레임 연출 프리셋"});
   await expect(preset.locator('option[value="user:내 흑요광"]')).toHaveCount(1);
