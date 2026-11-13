@@ -52,6 +52,22 @@ test("YGO STUDIO: 3:4 원본 속성·랭크 에셋 적용, 저장·PNG 다운로
   const preview = dialog.locator('canvas[aria-label="3:4 오버프레임 미리보기"]');
   await expect.poll(() => preview.evaluate(c => (c as HTMLCanvasElement).width)).toBe(900);
   await expect.poll(() => preview.evaluate(c => (c as HTMLCanvasElement).height)).toBe(1200);
+  // On a uniform source image, the title-area pixels must remain untouched by default.
+  // Only the explicit "gradient" choice may darken them. The "shadow" choice affects glyphs only.
+  const topPixel = () => preview.evaluate(c => {
+    const canvas = c as HTMLCanvasElement;
+    const pixels = canvas.getContext("2d")!.getImageData(450, 15, 1, 1).data;
+    return Array.from(pixels).slice(0, 3);
+  });
+  const backgroundSelect = dialog.getByRole("combobox", { name: "간편 모드 카드명 배경" });
+  await expect(backgroundSelect).toHaveValue("none");
+  await expect.poll(topPixel).toEqual([56, 22, 92]);
+  await backgroundSelect.selectOption("gradient");
+  await expect.poll(topPixel).not.toEqual([56, 22, 92]);
+  await backgroundSelect.selectOption("shadow");
+  await expect.poll(topPixel).toEqual([56, 22, 92]);
+  await backgroundSelect.selectOption("none");
+  await expect.poll(topPixel).toEqual([56, 22, 92]);
 
   // Set Xyz/Rank and verify the imported PNG really changes the canvas.
   await dialog.getByRole("combobox", { name: "간편 모드 카드 종류" }).selectOption("xyz");
@@ -71,6 +87,7 @@ test("YGO STUDIO: 3:4 원본 속성·랭크 에셋 적용, 저장·PNG 다운로
   await tool.getByRole("button", { name: "3:4 간편 모드 열기" }).click();
   await expect(dialog.getByRole("textbox", { name: "간편 모드 카드명" })).toHaveValue("A7－00 이클립스");
   await expect(dialog.getByRole("spinbutton", { name: "간편 모드 레벨/랭크" })).toHaveValue("5");
+  await expect(dialog.getByRole("combobox", { name: "간편 모드 카드명 배경" })).toHaveValue("none");
   const downloadPromise = page.waitForEvent("download");
   await dialog.getByRole("button", { name: "3:4 PNG 다운로드" }).click();
   const downloaded = await downloadPromise;
