@@ -75,8 +75,9 @@ test("3:4 V3.3: 자유 드래그·크기조절·스냅·프리셋·저장·PNG �
   await dialog.getByRole("button", { name: "현재 배치 프리셋 저장" }).click();
   await expect(dialog.getByRole("combobox", { name: "오버프레임 프리셋 불러오기" })
     .locator('option[value="save:전투형"]')).toHaveCount(1);
-  await x.fill("200");
-  await expect(x).toHaveValue("200");
+  // A wider effect box must remain inside the card; use a valid test coordinate.
+  await x.fill("0");
+  await expect(x).toHaveValue("0");
   await dialog.getByRole("combobox", { name: "오버프레임 프리셋 불러오기" })
     .selectOption("save:전투형");
   await expect.poll(() => x.inputValue()).toBe(positionedX);
