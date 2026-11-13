@@ -9,7 +9,7 @@ test('P2 공통 카드 등록·중복 충돌 방지·이미지 연구소 전달'
   await page.getByRole('button',{name:'직접 입력 검토'}).click();
   await expect(page.getByText('신규 카드').first()).toBeVisible();
   await page.getByRole('button',{name:'신규 자료만 확정'}).click();
-  await expect(page.getByRole('cell',{name:'RS－오리온'})).toBeVisible();
+  await expect(page.getByRole('cell',{name:'RS－오리온',exact:true})).toBeVisible();
   // Same ID with different source content remains a conflict, not an update.
   await page.locator('input[type="file"][accept=".json,.csv,.ydk"]').setInputFiles({
     name:'개정안.json',mimeType:'application/json',
@@ -17,7 +17,7 @@ test('P2 공통 카드 등록·중복 충돌 방지·이미지 연구소 전달'
   });
   await expect(page.getByText('충돌(기존 유지)')).toBeVisible();
   await page.getByRole('button',{name:'신규 자료만 확정'}).click();
-  await expect(page.getByRole('cell',{name:'RS－오리온'})).toBeVisible();
+  await expect(page.getByRole('cell',{name:'RS－오리온',exact:true})).toBeVisible();
   await page.getByRole('checkbox',{name:'918760001 전송 선택'}).check();
   await page.getByRole('button',{name:'선택 카드 → 이미지 연구소'}).click();
   await expect(page.getByText('공통 보관함 선택 카드',{exact:false})).toBeVisible();
