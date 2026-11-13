@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: bduidohd937-beep/ygocardmaker
-          ref: 4ec47eadc02ddaa5af9c2a2bb800ec55631aa633
+          ref: 8653c9dcaf0bc37e68feeaec5f31d133bf73943c
           path: .integration_sources/cardmaker
       - name: DESIGN LAB 소스 (스냅샷 고정)
         uses: actions/checkout@v4
