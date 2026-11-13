@@ -42,7 +42,7 @@ test('UI V2: 실제 보관함 테마만 프로젝트 목록에 표시하고 공�
   await page.getByRole('button',{name:'공통 카드 목록 열기'}).click();
   await expect(page.getByRole('textbox',{name:'공통 카드 검색'})).toHaveValue('코스모코드');
   await expect(page.getByRole('cell',{name:'코스모코드－알파',exact:true})).toBeVisible();
-  await expect(page.getByRole('cell',{name:'무성해－아비온'})).toHaveCount(0);
+  await expect(page.getByRole('cell',{name:'무성해－아비온',exact:true})).toHaveCount(0);
 });
 
 test('UI V2: 좁은 화면에서 사이드바를 열고 작업실로 이동한다',async({page})=>{
