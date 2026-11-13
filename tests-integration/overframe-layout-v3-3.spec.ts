@@ -71,7 +71,7 @@ test("3:4 V3.3: 자유 드래그·크기조절·스냅·프리셋·저장·PNG �
   await page.mouse.up();
   await expect.poll(() => width.inputValue()).not.toBe(startWidth);
 
-  await dialog.getByRole("textbox", { name: "프리셋 이름" }).fill("전투형");
+  await dialog.getByRole("textbox", { name: "프리셋 이름", exact: true }).fill("전투형");
   await dialog.getByRole("button", { name: "현재 배치 프리셋 저장" }).click();
   await expect(dialog.getByRole("combobox", { name: "오버프레임 프리셋 불러오기" })
     .locator('option[value="save:전투형"]')).toHaveCount(1);
