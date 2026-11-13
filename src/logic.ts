@@ -1,4 +1,5 @@
 import { createInitialData, displayName, isAllowedArtworkUrl } from './data';
+import {validateGenericRecords} from './genericCatalog';
 import type { Card, History, Proposal, StudioData, World, WorldStage } from './data';
 
 export const makeId = () => globalThis.crypto?.randomUUID?.() ?? `id-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -102,6 +103,7 @@ export function validateBackup(value:unknown):value is StudioData {
   const v=value as Partial<StudioData>;
   if(v.schemaVersion!==1||!Array.isArray(v.worlds)||!Array.isArray(v.cards)||!Array.isArray(v.history))return false;
   if(v.worlds.length>500||v.cards.length>20000||v.history.length>100000)return false;
+  if(v.genericCards!==undefined&&!validateGenericRecords(v.genericCards))return false;
   const ids=new Set<string>();
   for(const w of v.worlds){
     if(!w||typeof w.id!=='string'||typeof w.name!=='string'||!Array.isArray(w.stages)||w.stages.length!==3)return false;
