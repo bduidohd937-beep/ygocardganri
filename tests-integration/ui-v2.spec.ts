@@ -5,7 +5,8 @@ test('UI V2: YGO STUDIO 메인과 바로가기, 카테고리 접기 및 최근 �
   await expect(page).toHaveTitle(/YGO STUDIO/);
   await expect(page.getByRole('heading',{name:'YGO STUDIO'})).toBeVisible();
   await expect(page.getByText('최근 작업',{exact:true})).toBeVisible();
-  await expect(page.locator('.v2-shortcut')).toHaveCount(5);
+  await expect(page.locator('.v2-shortcut')).toHaveCount(6);
+  await expect(page.getByRole('button',{name:/범용 카드 도감 바로 열기/})).toBeVisible();
   await expect(page.getByRole('button',{name:'공통 카드·덱 보관함'}).first()).toBeVisible();
   const research=page.getByRole('button',{name:'연구 · 검증'});
   await research.click();
