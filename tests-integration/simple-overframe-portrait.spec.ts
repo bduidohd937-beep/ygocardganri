@@ -55,7 +55,7 @@ test("YGO STUDIO: 3:4 원본 속성·랭크 에셋 적용, 저장·PNG 다운로
   await dialog.getByRole("combobox", { name: "간편 모드 카드 종류" }).selectOption("xyz");
   await dialog.getByRole("spinbutton", { name: "간편 모드 레벨/랭크" }).fill("5");
   await dialog.getByRole("combobox", { name: "간편 모드 속성" }).selectOption("어둠");
-  await expect(dialog.getByText(/적용 중: 기존 카드명 폰트/)).toBeVisible();
+  await expect(dialog.getByText(/현재 선택한 카드 표시는 기존 리소스 에셋을 사용합니다/)).toBeVisible();
   const capture = () => preview.evaluate(c => (c as HTMLCanvasElement).toDataURL("image/png"));
   const initial = await capture();
   await dialog.getByRole("checkbox", { name: "랭크 아이콘 표시" }).uncheck();
