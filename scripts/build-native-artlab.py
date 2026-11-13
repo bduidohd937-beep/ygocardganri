@@ -61,7 +61,7 @@ prompt_wrapper="""export function mountPromptLab(root) {
 prompt=prompt.replace(prefix,prompt_wrapper,1)
 listener="window.addEventListener('ygo:card-change',e=>syncCard(e.detail,false));"
 assert prompt.count(listener)==1, 'Prompt card-change listener changed'
-prompt=prompt.replace(listener,"const handleCardChange=e=>syncCard(e.detail,false);\\n  window.addEventListener('ygo:card-change',handleCardChange);",1)
-prompt=prompt.rstrip()[:-len('})();')] + "  return () => { window.removeEventListener('ygo:card-change',handleCardChange); };\\n}\\n"
+prompt=prompt.replace(listener,"const handleCardChange=e=>syncCard(e.detail,false);\n  window.addEventListener('ygo:card-change',handleCardChange);",1)
+prompt=prompt.rstrip()[:-len('})();')] + "  return () => { window.removeEventListener('ygo:card-change',handleCardChange); };\n}\n"
 (target/'prompt-lab-native.js').write_text(prompt,encoding='utf-8')
 print('[native] ART LAB 24-style prompt research module generated')
