@@ -40,3 +40,28 @@ assert engine.count(path_old)==1, 'ART LAB asset path format changed'
 engine=engine.replace(path_old,path_new,1)
 (target/'asset-engine-native.js').write_text(engine,encoding='utf-8')
 print('[native] ART LAB mount module, scoped selectors and asset URL prefix generated')
+
+
+# V1.5 화풍 연구실은 원본 브라우저 UI와 별도의 프롬프트 모듈로 분리한다.
+# 기존 app.js의 카드 저장·이미지 생성 로직은 그대로 사용한다.
+prompt=(source/'prompt-lab.js').read_text(encoding='utf-8')
+assert prompt.count(prefix)==1, 'Unexpected prompt lab entry point'
+assert prompt.rstrip().endswith('})();'), 'Unexpected prompt lab closure'
+prompt_wrapper="""export function mountPromptLab(root) {
+  'use strict';
+  if (!root || !root.host || !root.getElementById) throw new Error('ART LAB ShadowRoot required');
+  const realDocument = window.document;
+  const document = {
+    getElementById: id => root.getElementById(id),
+    querySelector: selector => root.querySelector(selector),
+    createElement: (...args) => realDocument.createElement(...args),
+    body: realDocument.body
+  };
+"""
+prompt=prompt.replace(prefix,prompt_wrapper,1)
+listener="window.addEventListener('ygo:card-change',e=>syncCard(e.detail,false));"
+assert prompt.count(listener)==1, 'Prompt card-change listener changed'
+prompt=prompt.replace(listener,"const handleCardChange=e=>syncCard(e.detail,false);\\n  window.addEventListener('ygo:card-change',handleCardChange);",1)
+prompt=prompt.rstrip()[:-len('})();')] + "  return () => { window.removeEventListener('ygo:card-change',handleCardChange); };\\n}\\n"
+(target/'prompt-lab-native.js').write_text(prompt,encoding='utf-8')
+print('[native] ART LAB 24-style prompt research module generated')
