@@ -7,7 +7,7 @@ export type IntegrationKey = 'artlab' | 'cardmaker' | 'designlab' | 'arena';
 
 const MODULES: Record<IntegrationKey, { name: string; path: string; description: string; version: string }> = {
   artlab: { name: '이미지 연구소', path: 'modules/artlab/', description: '임시 일러스트 제작 · 카드별 SVG 합성 · ZIP 이미지 저장', version: 'YGO ART LAB V1.4' },
-  cardmaker: { name: '카드 렌더러', path: 'modules/cardmaker/', description: '유희왕 카드 프레임 편집 · 이미지 크롭 · 카드 PNG/JPG/ZIP 출력', version: 'CARD MAKER / main 기준' },
+  cardmaker: { name: '카드 렌더러', path: 'modules/cardmaker/', description: '유희왕 카드 프레임 편집 · 오버프레임 돌출 PNG · 이미지 크롭 · 카드 PNG/JPG/ZIP 출력', version: 'CARD MAKER / main 기준' },
   designlab: { name: '디자인·덱 실험실', path: 'modules/designlab/', description: 'CDB·Lua 교차 검수 · 덱 매수 편집 · YDK 실험', version: 'DESIGN LAB V0.8.3.1' },
   arena: { name: 'PSH 검증 관제실', path: 'modules/arena/', description: '세션·회귀 테스트·MSG16 교착·로그 증거·주간 우선순위', version: 'PSH 관제실 V1.2' },
 };
