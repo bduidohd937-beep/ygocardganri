@@ -6,7 +6,7 @@ import {emptyCatalog,validCardId} from './sharedCatalog';
 import {loadCatalog,getOriginal} from './fileVault';
 import type {FileCatalog} from './fileCatalog';
 import {listMedia,type MediaItem} from './sharedMedia';
-import {buildUnifiedIndex,type UnifiedCardRow} from './unifiedCardIndex';
+import {buildUnifiedIndex} from './unifiedCardIndex';
 import {
   genericBackup,genericCsv,genericFolder,genericRecordsOrSeed,parseGenericBackup,
   searchGeneric,validateGenericRecords,type GenericRecord,type GenericAdoption,
