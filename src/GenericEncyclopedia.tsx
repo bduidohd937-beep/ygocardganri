@@ -62,7 +62,7 @@ export default function GenericEncyclopedia({records:input,sharedCatalog,onChang
     r.id,{name:r.name,effect:r.card?.effect||r.cdb[0]?.effectText||'',attribute:''}
   ])),[index]);
   const shown=useMemo(()=>searchGeneric(records,query,filter,references),[records,query,filter,references]);
-  const current=records.find(r=>r.key===selectedKey)||records[0];
+  const current=shown.find(r=>r.key===selectedKey)||shown[0];
   const linked=current?.id?byId.get(current.id):undefined;
   const assetByKey=useMemo(()=>new Map(assets.map(a=>[a.id,a])),[assets]);
   const getAsset=(slot:GenericSlot)=>current&&assetByKey.get(current.key+'::'+slot);
