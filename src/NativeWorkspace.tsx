@@ -10,7 +10,7 @@ type NativeModule={mountCardMaker?:(host:HTMLElement)=>{root:ShadowRoot;unmount:
 type Handle={root:ShadowRoot;unmount:()=>void};
 const metadata={
   artlab:{title:'이미지 연구소',version:'YGO ART LAB V1.4',desc:'카드 ID · 임시 일러스트 · SVG 모티브 · 이미지 ZIP'},
-  cardmaker:{title:'카드 렌더러',version:'DUELMIND · 오버프레임 V3.8',desc:'일반 ↔ 3:4 오버프레임 비교·전환 · 고화질/EDOPro PNG·ZIP'}
+  cardmaker:{title:'카드 렌더러',version:'DUELMIND · 통합 작업실 V4.0',desc:'CDB · 카드 ID 원화 연결 · 일반/3:4 디자인 · EDOPro 통합 출력'}
 };
 const baseUrl=()=>{
   const b=import.meta.env.BASE_URL;
