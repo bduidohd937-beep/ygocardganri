@@ -26,7 +26,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: bduidohd937-beep/ygoimeagemaker
-          ref: bbe322542187a136545597f652a5d8be071e8642
+          ref: 577c96fb7237eb027c43e43308393fdc5ee5b683
           path: .integration_sources/artlab
       - name: 카드 렌더러 소스 고정 · 오버프레임
         uses: actions/checkout@v4
