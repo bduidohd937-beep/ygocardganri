@@ -32,6 +32,7 @@ const NativeArena=lazy(()=>import('./NativeArena'));
 import SharedLibrary from './SharedLibrary';
 const MigrationCenter=lazy(()=>import('./MigrationCenter'));
 const StudioHome=lazy(()=>import('./StudioHome'));
+const GenericEncyclopedia=lazy(()=>import('./GenericEncyclopedia'));
 import {
   PROJECT_SCOPE_KEY, RECENT_PAGES_KEY, addRecent, parseRecentPages, parseSharedProjectStorage,
   projectOptions, safeProjectSelection
@@ -42,11 +43,12 @@ const DeckLab=lazy(()=>import('./DeckLab'));
 import { loadAllImportedRecords, restoreWorkbenchBackup, validateWorkbenchBackup } from './workbenchVault';
 import { buildCardIndex, searchCardIndex, visibleSlice, CARD_PAGE_SIZE, HISTORY_PAGE_SIZE } from './performance';
 
-type Page = 'home'|'themes'|'cards'|'studio'|'worlds'|'reviews'|'audit'|'files'|'decks'|'shared'|'migration'|'artlab'|'cardmaker'|'designlab'|'arena'|'history'|'settings';
+type Page = 'home'|'generic'|'themes'|'cards'|'studio'|'worlds'|'reviews'|'audit'|'files'|'decks'|'shared'|'migration'|'artlab'|'cardmaker'|'designlab'|'arena'|'history'|'settings';
 type Notice = { text:string; kind:'success'|'error'|'info' };
 type NavGroup = 'home'|'create'|'research'|'manage';
 const NAV: { key:Page; name:string; group:NavGroup; icon: typeof LayoutGrid }[] = [
   {key:'home',name:'대시보드',group:'home',icon:LayoutGrid},
+  {key:'generic',name:'범용 카드 도감',group:'home',icon:BookOpen},
   {key:'themes',name:'테마 라이브러리',group:'home',icon:BookOpen},
   {key:'cards',name:'카드 라이브러리',group:'create',icon:Layers3},
   {key:'worlds',name:'세계관 · 진화 계보',group:'create',icon:GitCompareArrows},
@@ -344,13 +346,17 @@ export default function App(){
         <div className="topbar-right"><label className="v2-project-picker" title="프로젝트 전환: 대시보드·공통 자료 탐색 범위">
           <span className="v2-project-caption">프로젝트</span>
           <select aria-label="현재 프로젝트 선택" value={activeProject} onChange={e=>changeProject(e.target.value as StudioScope)}>{studioProjects.map(p=><option key={p.key} value={p.key}>{p.name}</option>)}</select>
-        </label><div className="searchbox"><Search size={16}/><input ref={globalSearch} value={search} onFocus={()=>{if(page!=='cards'&&page!=='studio')go('cards');}} onChange={e=>{setSearch(e.target.value);if(page!=='cards')go('cards');}} placeholder="카드명·세계·효과 검색" aria-label="카드 검색"/><kbd>⌘ K</kbd></div><button className="top-action" onClick={exportBackup} title="JSON 전체 백업"><Download size={18}/></button></div>
+        </label><button type="button" className="generic-main-link" onClick={()=>go('generic')}><BookOpen size={16}/> 범용 카드 도감</button><div className="searchbox"><Search size={16}/><input ref={globalSearch} value={search} onFocus={()=>{if(page!=='cards'&&page!=='studio')go('cards');}} onChange={e=>{setSearch(e.target.value);if(page!=='cards')go('cards');}} placeholder="카드명·세계·효과 검색" aria-label="카드 검색"/><kbd>⌘ K</kbd></div><button className="top-action" onClick={exportBackup} title="JSON 전체 백업"><Download size={18}/></button></div>
       </header>
       {saveError&&<div className="error-banner"><AlertCircle size={16}/>{saveError}<button onClick={exportBackup}>백업 내보내기</button></div>}
       <main className={`content content--${page}`}>
         {page==='home'&&<Suspense fallback={<div className="not-yet">YGO STUDIO 대시보드를 불러오는 중...</div>}><StudioHome data={data} counts={counts} pendingCards={pendingCards} scope={activeProject} projects={studioProjects} sharedCatalog={sharedProjects.catalog}
-          recentPages={recentPages.map(key=>NAV.find(p=>p.key===key)).filter((item):item is typeof NAV[number]=>!!item).map(item=>({key:item.key as 'home'|'themes'|'cards'|'worlds'|'reviews'|'decks'|'shared'|'artlab'|'cardmaker'|'designlab'|'arena'|'history',name:item.name}))}
+          recentPages={recentPages.map(key=>NAV.find(p=>p.key===key)).filter((item):item is typeof NAV[number]=>!!item).map(item=>({key:item.key as 'home'|'generic'|'themes'|'cards'|'worlds'|'reviews'|'decks'|'shared'|'artlab'|'cardmaker'|'designlab'|'arena'|'history',name:item.name}))}
           onNavigate={go} onScopeChange={changeProject} onOpenWorld={openWorld} onOpenCard={openCard}/></Suspense>}
+        {page==='generic'&&<Suspense fallback={<div className="not-yet">범용 카드 도감을 불러오는 중...</div>}><GenericEncyclopedia
+          records={data.genericCards} sharedCatalog={sharedProjects.catalog}
+          onChange={records=>mutate(old=>({...old,genericCards:records}))}
+          onOpenFiles={()=>go('files')}/></Suspense>}
         {page==='themes'&&<><PageHeading eyebrow="PROJECT LIBRARY / 001" title="테마 라이브러리" subtitle="서로 다른 세계와 카드군을 하나의 제작 원장으로 관리합니다."/><div className="feature-theme"><div><span className="micro-label">PROJECT 001 / ACTIVE</span><h2>종언성서 — 녹투르나</h2><p>최종 테마 《무명성서》를 중심으로 다섯 세계의 카드·설정·진화 계보를 관리합니다.</p><div className="feature-tags"><span>세계 5</span><span>초기 카드 {data.cards.length}</span><span>확정 하급 아벨 5</span></div></div><div className="feature-theme-deco">✧</div></div>
           <SectionTitle index="A" title="세계별 설계 원장" aside="SELECT A WORLD"/>
           <div className="theme-grid">{data.worlds.map((w,i)=><button key={w.id} className="theme-world" onClick={()=>openWorld(w.id)} style={{'--realm':w.accent} as React.CSSProperties}><div className="theme-world-top"><span>0{i+1} / {w.shortLabel}</span><ArrowRight size={18}/></div><div className="theme-world-sigil">{['✧','◷','◈','⌁','⌘'][i]}</div><strong>{w.name}</strong><small>{w.concept}</small><div className="theme-world-bottom">레벨 4 아벨 등록 <Check size={15}/></div></button>)}</div>
