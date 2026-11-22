@@ -67,6 +67,7 @@ test("V3.7 원화 밝기·윤곽선 추천 3종 실제 미리보기→배치 적
   await dialog.getByRole("button",{name:"설정 저장"}).click();
   await expect(dialog).toHaveCount(0);
   await tool.getByRole("button",{name:"3:4 간편 모드 열기"}).click();
+  await dialog.getByRole("button", { name: "고급 설정 보기" }).click();
   await expect(y).toHaveValue("970");
   await expect(dialog.getByText("원화 밝기·윤곽선 분석 완료")).toBeVisible();
   await dialog.getByRole("button",{name:"취소",exact:true}).click();
