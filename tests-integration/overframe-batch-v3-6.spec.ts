@@ -118,5 +118,6 @@ test("YGO V3.6: EDOPro만 출력하면서 여백 추가, 원화 비율 왜곡 �
   await dialog.getByRole("combobox",{name:"EDOPro 비율 방식"}).selectOption("pad");
   await expect(dialog.getByRole("combobox",{name:"EDOPro 비율 방식"})).toHaveValue("pad");
   await expect(dialog.getByText(/출력 가능 0장/)).toBeVisible();
+  await dialog.getByText(/누락·에셋 오류 .*장 상세 확인/).click();
   await expect(dialog.getByText(/원본 카드 에셋 누락/).first()).toBeVisible();
 });
