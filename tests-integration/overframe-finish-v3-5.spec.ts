@@ -8,6 +8,7 @@ test("V3.5 오버프레임: 연출 ON/OFF·종류별 광택·프리셋 저장·�
   await tool.getByRole("tab",{name:"오버프레임",exact:true}).click();
   await tool.getByRole("button",{name:"3:4 간편 모드 열기"}).click();
   const dialog=tool.getByRole("dialog",{name:"오버프레임 간편 제작"});
+  await dialog.getByRole("button", { name: "고급 설정 보기" }).click();
 
   // Isolate the finish layer; the existing original-font and attribute tests
   // exercise text/asset compositing independently.
@@ -77,6 +78,7 @@ test("V3.5 오버프레임: 연출 ON/OFF·종류별 광택·프리셋 저장·�
   await dialog.getByRole("button",{name:"설정 저장"}).click();
   await expect(dialog).toHaveCount(0);
   await tool.getByRole("button",{name:"3:4 간편 모드 열기"}).click();
+  await dialog.getByRole("button", { name: "고급 설정 보기" }).click();
   await expect(enabled).toBeChecked();
   await expect(style).toHaveValue("xyz");
   await expect(strength).toHaveValue("70");
