@@ -84,7 +84,7 @@ test("V4.1: 출력 전 카드별 누락 검수, 수정 이동, 검수표 JSON �
   const {hub}=await openHub(page);
   await hub.getByRole("navigation",{name:"통합 제작 단계"})
     .getByRole("button",{name:/04 출력/}).click();
-  const audit=hub.getByRole("region",{name:"V4.1 출력 전 자동 검수"});
+  const audit=hub.getByRole("region",{name:"V4.2 출력 전 자동 검수"});
   await expect(audit).toBeVisible();
   await expect(audit).toContainText("보완 필요 3장");
   await expect(audit.getByText(/3:4 오버프레임 원화를 먼저 저장하세요/).first()).toBeVisible();
@@ -94,9 +94,9 @@ test("V4.1: 출력 전 카드별 누락 검수, 수정 이동, 검수표 JSON �
   const download=page.waitForEvent("download");
   await audit.getByRole("button",{name:"검수표 JSON 다운로드"}).click();
   const file=await download;
-  expect(file.suggestedFilename()).toBe("YGO_STUDIO_출력전_검수표.json");
+  expect(file.suggestedFilename()).toBe("카드_출력전_검수표_V4.3.json");
   const report=JSON.parse(await readFile(await file.path(),"utf8"));
-  expect(report.version).toBe("4.1");
+  expect(report.version).toBe("4.3");
   expect(report.mode).toBe("both");
   expect(report.selected).toBe(3);
   expect(report.outputsReady).toBe(3);
