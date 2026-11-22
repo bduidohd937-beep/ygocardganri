@@ -25,6 +25,7 @@ test("3:4 V3.3: 자유 드래그·크기조절·스냅·프리셋·저장·PNG �
   await tool.getByRole("tab", { name: "오버프레임", exact: true }).click();
   await tool.getByRole("button", { name: "3:4 간편 모드 열기" }).click();
   const dialog = tool.getByRole("dialog", { name: "오버프레임 간편 제작" });
+  await dialog.getByRole("button", { name: "고급 설정 보기" }).click();
   await dialog.getByRole("checkbox", { name: "카드명 표시" }).uncheck();
 
   const base64 = await page.evaluate(() => {
