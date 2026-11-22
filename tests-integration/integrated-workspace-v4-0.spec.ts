@@ -20,7 +20,7 @@ async function openHub(page:import("@playwright/test").Page){
   await page.goto("/ygocardganri/");
   await page.getByRole("button",{name:"카드 렌더러",exact:true}).click();
   const tool=page.locator('[data-native-tool="cardmaker"]');
-  await tool.getByRole("button",{name:"V4.0 통합 작업실 열기"}).click();
+  await tool.getByRole("button",{name:"V4.3 통합 작업실 열기"}).click();
   const hub=tool.getByRole("dialog",{name:"카드 제작 통합 작업실"});
   await expect(hub).toBeVisible();
   return {tool,hub};
@@ -95,7 +95,7 @@ test("V4.0 CDB/에셋 통합·ID 원화 매칭·기존 이미지 보호·디자�
   await expect(compare.getByAltText("일반 OCG 카드 비교 미리보기")).toBeVisible();
   await expect(compare.getByAltText("3:4 오버프레임 비교 미리보기")).toBeVisible();
   await compare.getByRole("button",{name:"비교 화면 닫기"}).click();
-  await tool.getByRole("button",{name:"V4.0 통합 작업실 열기"}).click();
+  await tool.getByRole("button",{name:"V4.3 통합 작업실 열기"}).click();
   await expect(hub.locator(".studio-hub-stats")).toContainText("두 형태 보유");
 });
 
