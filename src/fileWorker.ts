@@ -45,7 +45,7 @@ function safeCode(value:unknown):string|null {
   return Number.isSafeInteger(n)&&n>0?String(n):null;
 }
 async function parseCdb(bytes:Uint8Array): Promise<{cards:PreviewAsset['cards']; notes:string[]}> {
-  const SQL=await initSqlJs({ locateFile:()=>wasmUrl });
+  const SQL=await initSqlJs({ useOldExtensionFunctions:false, locateFile:()=>wasmUrl });
   const db=new SQL.Database(bytes);
   try {
     const tables=db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('datas','texts')");
