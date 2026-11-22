@@ -33,6 +33,7 @@ test("V3.7 원화 밝기·윤곽선 추천 3종 실제 미리보기→배치 적
   await tool.getByRole("tab",{name:"오버프레임",exact:true}).click();
   await tool.getByRole("button",{name:"3:4 간편 모드 열기"}).click();
   const dialog=tool.getByRole("dialog",{name:"오버프레임 간편 제작"});
+  await dialog.getByRole("button", { name: "고급 설정 보기" }).click();
 
   const art=await page.evaluate(()=>{
     const c=document.createElement("canvas");
