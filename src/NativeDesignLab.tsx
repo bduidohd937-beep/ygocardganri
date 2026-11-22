@@ -99,7 +99,7 @@ async function loadNativeDesignLab(host:HTMLDivElement,wasCancelled:()=>boolean)
   global.JSZip=JSZip;
   // Load sql-wasm.wasm from our pinned local build, not from an unaudited CDN.
   global.initSqlJs=((options?:Parameters<typeof initSqlJs>[0])=>
-    initSqlJs({...options,locateFile:()=>prefix+'sql-wasm.wasm'})) as typeof initSqlJs;
+    initSqlJs({...options,useOldExtensionFunctions:options?.useOldExtensionFunctions ?? false,locateFile:()=>prefix+'sql-wasm.wasm'})) as typeof initSqlJs;
   global.__YGO_LAB_CONTEXT__=context;
   let unmounted=false;
   const cleanup=()=>{
